@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>案件スタイルブック</title>
+<link rel="apple-touch-icon" href="image/ロゴ.png">
+<link rel="icon" href="image/ロゴ.png">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#F52549;--green:#9BC01C;--navy:#1A1A1A;--gray:#999;--border:#EBEBEB}
+body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);padding-bottom:60px}
+
+.hero{background:var(--red);padding:28px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hero-eye{font-family:'Nunito',sans-serif;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.7);margin-bottom:3px}
+.hero-title{font-size:26px;font-weight:900;color:#fff;line-height:1.1;letter-spacing:0.08em}
+.hero-sub{font-family:'Nunito',sans-serif;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.7);margin-top:3px}
+.hero-badge{background:rgba(255,255,255,0.2);border-radius:8px;padding:8px 14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;color:#fff;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+
+.sec-label{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--red);margin:22px 20px 10px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1.5px;background:var(--red);opacity:0.2}
+
+/* PROJECT CARDS */
+.proj-list{padding:0 16px}
+.proj-card{border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;background:#fff}
+.proj-head{display:flex;align-items:center;gap:10px;padding:12px 16px;user-select:none;background:#fff}
+.proj-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;cursor:pointer}
+.proj-name{flex:1;font-size:15px;font-weight:900;color:var(--navy);cursor:pointer}
+.proj-tag{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;letter-spacing:1.5px;padding:3px 8px;border-radius:20px;color:#fff;flex-shrink:0}
+.proj-head-btn{font-size:13px;color:#DDD;cursor:pointer;padding:3px 5px;border-radius:5px;transition:color 0.15s;border:none;background:none;line-height:1}
+.proj-head-btn:hover{color:var(--red)}
+.proj-arrow{font-size:11px;color:var(--gray);cursor:pointer;padding:3px 5px}
+.proj-body{border-top:1px solid var(--border);background:#FAFCFF}
+
+/* PROJ EDIT FORM */
+.proj-edit-form{padding:12px 16px;border-bottom:1px solid var(--border);background:#fff;display:none}
+.proj-edit-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.proj-edit-row:last-child{margin-bottom:0}
+.proj-edit-label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;letter-spacing:1px;color:var(--gray);min-width:48px}
+.proj-edit-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.proj-edit-input:focus{border-color:var(--red)}
+.proj-edit-actions{display:flex;gap:6px;justify-content:flex-end}
+.btn-save{background:var(--red);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer}
+.btn-cancel{background:none;border:1.5px solid var(--border);border-radius:7px;padding:7px 12px;font-size:11px;color:var(--gray);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700}
+
+/* INNER TOGGLE */
+.inner-toggle{border-bottom:1px solid var(--border)}
+.inner-toggle:last-child{border-bottom:none}
+.inner-head{display:flex;align-items:center;gap:8px;padding:11px 16px;user-select:none;background:#fff}
+.inner-head-click{display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;min-width:0}
+.inner-head-click:hover .inner-title{color:var(--red)}
+.inner-label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;letter-spacing:2px;color:var(--red);flex-shrink:0}
+.inner-title{flex:1;font-size:13px;font-weight:700;color:var(--navy);transition:color 0.15s}
+.inner-arrow{font-size:11px;color:var(--gray)}
+.inner-body{border-top:1px dashed var(--border);background:#FAFCFF}
+
+/* OVERVIEW */
+.overview-block{padding:12px 16px}
+.overview-textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);resize:vertical;outline:none;line-height:1.8;min-height:80px;background:#fff}
+.overview-textarea:focus{border-color:var(--red)}
+.overview-save-btn{margin-top:6px;background:var(--red);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;display:block}
+
+/* COLOR PALETTE */
+.palette-group{padding:10px 16px 4px}
+.palette-group-header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.palette-group-label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;letter-spacing:2px;color:var(--gray);flex:1}
+.group-del-btn{font-size:11px;color:#DDD;cursor:pointer;padding:2px 5px;border:none;background:none;border-radius:4px;transition:color 0.15s;font-family:'Nunito',sans-serif;font-weight:700}
+.group-del-btn:hover{color:var(--red)}
+.color-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.color-row:last-child{border-bottom:none}
+.color-swatch{width:36px;height:36px;border-radius:8px;flex-shrink:0;border:1px solid rgba(0,0,0,0.06)}
+.color-info{flex:1;min-width:0}
+.color-name{font-size:12px;font-weight:700;color:var(--navy)}
+.color-role{font-size:11px;color:var(--gray);margin-top:1px;line-height:1.4}
+.color-code-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.color-code{font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--gray);letter-spacing:1px}
+.copy-btn{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;padding:4px 8px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--gray);cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.copy-btn:hover{border-color:var(--red);color:var(--red)}
+.copy-btn.copied{border-color:var(--green);color:var(--green);background:#F6FFF0}
+.color-edit-btn{font-size:12px;color:#DDD;cursor:pointer;padding:3px 5px;border:none;background:none;border-radius:4px;transition:color 0.15s;line-height:1}
+.color-edit-btn:hover{color:var(--red)}
+.color-edit-form{display:none;padding:8px 0 4px}
+.color-edit-inner{display:flex;flex-direction:column;gap:6px}
+.color-edit-field{display:flex;align-items:center;gap:6px}
+.color-edit-field label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;color:var(--gray);min-width:36px}
+.color-edit-field input{flex:1;border:1.5px solid var(--border);border-radius:7px;padding:6px 9px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.color-edit-field input:focus{border-color:var(--red)}
+.color-edit-btns{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
+
+/* ADD COLOR / GROUP */
+.add-color-row{padding:8px 16px 10px;border-top:1px dashed var(--border)}
+.add-color-trigger{font-size:12px;font-weight:700;color:#CCC;cursor:pointer;font-family:'Nunito',sans-serif;transition:color 0.15s}
+.add-color-trigger:hover{color:var(--red)}
+.add-color-form{display:none;flex-direction:column;gap:6px}
+.add-color-field{display:flex;align-items:center;gap:6px}
+.add-color-field label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;color:var(--gray);min-width:36px}
+.add-color-field input{flex:1;border:1.5px solid var(--border);border-radius:7px;padding:6px 9px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.add-color-field input:focus{border-color:var(--red)}
+.add-color-btns{display:flex;gap:6px;justify-content:flex-end}
+.add-group-row{padding:8px 16px 12px;display:flex;gap:8px;border-top:1px solid var(--border)}
+.add-group-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.add-group-input:focus{border-color:var(--red)}
+.add-group-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap}
+
+/* REFS */
+.ref-list-inner{padding:4px 0}
+.ref-item{display:flex;align-items:flex-start;gap:8px;padding:9px 16px;border-bottom:1px solid var(--border)}
+.ref-item:last-child{border-bottom:none}
+.ref-label-tag{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;background:#FFF0F2;color:var(--red);padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:2px;white-space:nowrap}
+.ref-text{flex:1;font-size:13px;color:var(--navy);word-break:break-all;line-height:1.5}
+.ref-text a{color:var(--red);text-decoration:none}
+.ref-text a:hover{text-decoration:underline}
+.ref-action-btn{font-size:12px;color:#DDD;cursor:pointer;padding:2px 4px;border:none;background:none;border-radius:4px;transition:color 0.15s;line-height:1;flex-shrink:0}
+.ref-action-btn:hover{color:var(--red)}
+.ref-empty{padding:16px;font-size:12px;color:#CCC;text-align:center;font-family:'Nunito',sans-serif}
+.ref-add-area{padding:10px 14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;background:#fff}
+.ref-add-row{display:flex;gap:6px;align-items:center}
+.ref-add-label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;color:var(--gray);min-width:36px}
+.ref-add-input{flex:1;border:1.5px solid var(--border);border-radius:7px;padding:7px 10px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.ref-add-input:focus{border-color:var(--red)}
+.ref-add-btn{background:var(--red);color:#fff;border:none;border-radius:7px;padding:7px 12px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap}
+
+/* ADD PROJECT */
+.add-proj-area{margin:0 16px}
+.add-proj-form{display:flex;gap:8px}
+.add-proj-input{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;font-weight:700;color:var(--navy);font-family:'Zen Maru Gothic',sans-serif;outline:none;background:#fff}
+.add-proj-input::placeholder{color:#CCC;font-weight:400}
+.add-proj-input:focus{border-color:var(--red)}
+.add-proj-btn{background:var(--red);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;letter-spacing:1px;cursor:pointer}
+.add-proj-btn:hover{opacity:0.88}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;padding:10px 20px;border-radius:20px;opacity:0;transition:all 0.2s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div>
+    <div class="hero-eye">CLIENT STYLE GUIDE</div>
+    <div class="hero-title">案件スタイルブック</div>
+    <div class="hero-sub">STYLE BOOK</div>
+  </div>
+  <div class="hero-badge">STYLE</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="sec-label">案件一覧</div>
+<div class="proj-list" id="proj-list"></div>
+
+<div class="sec-label" style="margin-top:20px">案件を追加</div>
+<div class="add-proj-area">
+  <div class="add-proj-form">
+    <input class="add-proj-input" id="new-proj-name" type="text" placeholder="案件名を入力..." onkeydown="if(event.key==='Enter')addProject()">
+    <button class="add-proj-btn" onclick="addProject()">追加</button>
+  </div>
+</div>
+
+<script>
+const KEY = 'style_book_v1';
+
+const DEFAULT_PROJECTS = [
+  {
+    id: 'japas',
+    name: 'JAPAS CHANNEL',
+    dotColor: '#0056A5',
+    tag: 'YouTube',
+    tagColor: '#0056A5',
+    overview: 'クライアント：新日本空調サービス\n目的：採用・再生数ではなく"会社と社員の温度"を伝えるドキュメンタリーチャンネルの育成\nターゲット：取引先候補、採用候補者、関係者（広義のブランディング）\nトンマナ：誠実・清潔感・信頼・あたたかさ・少し型破り',
+    refs: [
+      {label:'公式サイト', url:'https://japas.co.jp'},
+      {label:'採用ページ', url:'https://www.japas.co.jp/recruit-entry/'},
+    ],
+    palette: [
+      {
+        group: 'ベースカラー：信頼感の青系',
+        colors: [
+          {name:'Corporate Blue', role:'見出し帯、名前テロップ、重要情報', hex:'#0056A5'},
+          {name:'Soft Corporate Blue', role:'サブ見出し、フレーム、地図ラベル', hex:'#347AB7'},
+          {name:'Variety Cyan', role:'ポップな強調、矢印、アイコン', hex:'#12B8D7'},
+          {name:'Bright Cyan', role:'背景、明るい帯、爽やか演出', hex:'#80DBDE'},
+          {name:'Light Cyan', role:'背景、吹き出し、柔らかい装飾', hex:'#ACE7EA'},
+        ]
+      },
+      {
+        group: 'アクセントカラー：バラエティ強調',
+        colors: [
+          {name:'Accent Red', role:'ツッコミ、重要ワード、赤帯', hex:'#D62828'},
+          {name:'Deep Red', role:'赤テロップの影・縁', hex:'#9E1F1F'},
+          {name:'Light Red', role:'注意・補足の淡背景', hex:'#FCE3E3'},
+          {name:'Pop Yellow', role:'目立たせたい文字、重要ワード', hex:'#FFC800'},
+          {name:'Soft Yellow', role:'黄色のサブ強調、柔らかい強調', hex:'#F6D94A'},
+          {name:'Light Yellow', role:'吹き出し背景、補足背景', hex:'#FFF3A3'},
+        ]
+      },
+      {
+        group: 'ゴールド系：特別感・フレーム・輝き',
+        colors: [
+          {name:'Deep Gold', role:'フレーム、縁、落ち着いた強調', hex:'#BC8B28'},
+          {name:'Bright Gold', role:'キラッとした装飾、アイコン', hex:'#F1B83C'},
+          {name:'Pale Gold', role:'光、背景、上品なハイライト', hex:'#F4EDB1'},
+        ]
+      },
+      {
+        group: '追加差し色：自己紹介・シーン別テロップ',
+        colors: [
+          {name:'Friendly Pink', role:'かわいい一言、女性社員', hex:'#F48FB1'},
+          {name:'Deep Pink', role:'ピンクの縁・影・強調', hex:'#D94F86'},
+          {name:'Light Pink', role:'ピンク系背景、柔らかい補足', hex:'#FCE4EC'},
+          {name:'Camp Green', role:'自然、料理、安心感、キャンプ感', hex:'#3CB371'},
+          {name:'Fresh Green', role:'ポップな料理・自然アイコン', hex:'#7ED957'},
+          {name:'Light Green', role:'補足背景、やさしい雰囲気', hex:'#DFF5E1'},
+          {name:'BBQ Orange', role:'BBQ、料理、元気、あたたかさ', hex:'#F28C28'},
+          {name:'Warm Orange', role:'食べ物・楽しい場面の軽い強調', hex:'#FFB347'},
+          {name:'Light Orange', role:'料理パート背景、温かい補足', hex:'#FFE0B2'},
+        ]
+      },
+      {
+        group: '既存テロップカラー（Content1〜8）',
+        colors: [
+          {name:'野崎さん（主役）', role:'発言テロップの文字色', hex:'#E8802A'},
+          {name:'松尾社長', role:'発言テロップの文字色', hex:'#0056A5'},
+          {name:'新入社員', role:'発言テロップの文字色', hex:'#3DAA70'},
+          {name:'Deep Navy', role:'名前カード背景（全員共通）、白文字', hex:'#142F6B'},
+          {name:'HP Blue', role:'撮影者（質問）テロップ帯', hex:'#347AB7'},
+          {name:'強調イエロー', role:'核心ワード部分強調（誰かの専用色ではない）', hex:'#FFD54F'},
+        ]
+      }
+    ]
+  }
+];
+
+let state = {projects:[]};
+
+function loadState() {
+  try {
+    const d = localStorage.getItem(KEY);
+    if (d) state = JSON.parse(d);
+    else state = {projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS))};
+  } catch(e) {
+    state = {projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS))};
+  }
+}
+function saveState() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) {} }
+function getProj(id) { return state.projects.find(p => p.id === id); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Add Project ──
+function addProject() {
+  const inp = document.getElementById('new-proj-name');
+  const name = inp.value.trim(); if (!name) return;
+  state.projects.push({id:'p'+Date.now(), name, dotColor:'#999', tag:'', tagColor:'#999', overview:'', refs:[], palette:[]});
+  saveState(); inp.value=''; renderList();
+}
+
+// ── Delete Project ──
+function deleteProject(id) {
+  if (!confirm('この案件を削除しますか？')) return;
+  state.projects = state.projects.filter(p => p.id !== id);
+  saveState(); renderList();
+}
+
+// ── Project Edit ──
+function toggleProjEdit(id) {
+  const el = document.getElementById('pedit-'+id);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+function saveProjEdit(id) {
+  const p = getProj(id); if (!p) return;
+  p.name = document.getElementById('pename-'+id).value.trim() || p.name;
+  p.tag  = document.getElementById('petag-'+id).value.trim();
+  p.tagColor = document.getElementById('petagc-'+id).value;
+  p.dotColor = document.getElementById('pedotc-'+id).value;
+  saveState(); renderList(true);
+}
+
+// ── Toggle panels ──
+function toggleProj(id) {
+  const el = document.getElementById('body-'+id);
+  const ar = document.getElementById('arr-'+id);
+  const open = el.style.display === 'none';
+  el.style.display = open ? '' : 'none';
+  ar.textContent = open ? '▲' : '▼';
+  open ? openPanels.add('body-'+id) : openPanels.delete('body-'+id);
+}
+function toggleInner(bodyId, arrId) {
+  const el = document.getElementById(bodyId);
+  const ar = document.getElementById(arrId);
+  const open = el.style.display === 'none';
+  el.style.display = open ? '' : 'none';
+  ar.textContent = open ? '▲' : '▼';
+  open ? openPanels.add(bodyId) : openPanels.delete(bodyId);
+}
+
+// ── Overview ──
+function saveOverview(id) {
+  const p = getProj(id); if (!p) return;
+  p.overview = document.getElementById('ov-ta-'+id).value;
+  saveState(); showToast('概要を保存しました');
+}
+
+// ── Color: copy ──
+function copyColor(hex, btnId) {
+  navigator.clipboard.writeText(hex).then(() => {
+    const btn = document.getElementById(btnId);
+    if (btn) { btn.textContent='✓ コピー済'; btn.classList.add('copied'); }
+    showToast(hex + ' をコピーしました');
+    setTimeout(() => { if (btn) { btn.textContent='コピー'; btn.classList.remove('copied'); } }, 2000);
+  });
+}
+
+// ── Color: toggle edit form ──
+function toggleColorEdit(id) {
+  const el = document.getElementById('cedit-'+id);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+// ── Color: save edit ──
+function saveColorEdit(projId, gi, ci) {
+  const p = getProj(projId); if (!p) return;
+  const prefix = `ce-${projId}-${gi}-${ci}`;
+  const name = document.getElementById(prefix+'-name').value.trim();
+  const role = document.getElementById(prefix+'-role').value.trim();
+  const hex  = document.getElementById(prefix+'-hex').value.trim();
+  if (name) p.palette[gi].colors[ci].name = name;
+  if (role) p.palette[gi].colors[ci].role = role;
+  if (/^#[0-9A-Fa-f]{3,6}$/.test(hex)) p.palette[gi].colors[ci].hex = hex.toUpperCase();
+  saveState(); renderList(true); showToast('色を更新しました');
+}
+
+// ── Color: delete ──
+function deleteColor(projId, gi, ci) {
+  const p = getProj(projId); if (!p) return;
+  p.palette[gi].colors.splice(ci, 1);
+  saveState(); renderList(true);
+}
+
+// ── Color: add ──
+function toggleAddColor(id) {
+  const el = document.getElementById('addcform-'+id);
+  const tr = document.getElementById('addctr-'+id);
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'flex' : 'none';
+  tr.style.display = open ? 'none' : '';
+}
+function submitAddColor(projId, gi) {
+  const p = getProj(projId); if (!p) return;
+  const prefix = `ac-${projId}-${gi}`;
+  const name = document.getElementById(prefix+'-name').value.trim();
+  const role = document.getElementById(prefix+'-role').value.trim();
+  const hex  = document.getElementById(prefix+'-hex').value.trim();
+  if (!name || !hex) return;
+  const h = /^#[0-9A-Fa-f]{3,6}$/.test(hex) ? hex.toUpperCase() : '#' + hex.toUpperCase();
+  p.palette[gi].colors.push({name, role, hex: h});
+  saveState(); renderList(true); showToast('色を追加しました');
+}
+
+// ── Group: add ──
+function addGroup(projId) {
+  const p = getProj(projId); if (!p) return;
+  const inp = document.getElementById('addg-'+projId);
+  const name = inp.value.trim(); if (!name) return;
+  p.palette.push({group: name, colors:[]});
+  saveState(); inp.value=''; renderList(true);
+}
+
+// ── Group: delete ──
+function deleteGroup(projId, gi) {
+  const p = getProj(projId); if (!p) return;
+  if (!confirm('このグループを削除しますか？')) return;
+  p.palette.splice(gi, 1);
+  saveState(); renderList(true);
+}
+
+// ── Refs ──
+function addRef(projId) {
+  const p = getProj(projId); if (!p) return;
+  const label = document.getElementById('rlab-'+projId).value.trim();
+  const url   = document.getElementById('rurl-'+projId).value.trim();
+  if (!url) return;
+  if (!p.refs) p.refs = [];
+  p.refs.push({label, url});
+  saveState();
+  document.getElementById('rlab-'+projId).value='';
+  document.getElementById('rurl-'+projId).value='';
+  renderList(true);
+}
+function deleteRef(projId, ri) {
+  const p = getProj(projId); if (!p) return;
+  p.refs.splice(ri, 1);
+  saveState(); renderList(true);
+}
+
+// ── Render ──
+const openPanels = new Set();
+
+function renderList(preserveOpen) {
+  const el = document.getElementById('proj-list');
+  if (!state.projects.length) {
+    el.innerHTML='<div style="color:#CCC;font-size:13px;text-align:center;padding:20px;border:1.5px solid var(--border);border-radius:12px">案件がまだありません</div>';
+    return;
+  }
+  el.innerHTML = state.projects.map(p => projCardHTML(p)).join('');
+  if (preserveOpen) {
+    openPanels.forEach(id => {
+      const el = document.getElementById(id); if (!el) return;
+      el.style.display = '';
+      const arrMap = {'body-':'arr-','ov-':'ovarr-','pal-':'palarr-','ref-':'refarr-'};
+      const arrId = id.replace(/^(body-|ov-|pal-|ref-)/, m => arrMap[m]||m);
+      const arr = arrId !== id ? document.getElementById(arrId) : null;
+      if (arr) arr.textContent = '▲';
+    });
+  }
+}
+
+function projCardHTML(p) {
+  const pid = p.id;
+
+  // overview
+  const overviewHTML = `
+    <div class="inner-toggle">
+      <div class="inner-head">
+        <div class="inner-head-click" onclick="toggleInner('ov-${pid}','ovarr-${pid}')">
+          <span class="inner-label">01</span>
+          <span class="inner-title">案件概要</span>
+          <span class="inner-arrow" id="ovarr-${pid}">▼</span>
+        </div>
+      </div>
+      <div class="inner-body" id="ov-${pid}" style="display:none">
+        <div class="overview-block">
+          <textarea class="overview-textarea" id="ov-ta-${pid}" placeholder="クライアント、目的、トンマナなどを自由に記録...">${esc(p.overview||'')}</textarea>
+          <button class="overview-save-btn" onclick="saveOverview('${pid}')">保存</button>
+        </div>
+      </div>
+    </div>`;
+
+  // palette
+  const paletteHTML = `
+    <div class="inner-toggle">
+      <div class="inner-head">
+        <div class="inner-head-click" onclick="toggleInner('pal-${pid}','palarr-${pid}')">
+          <span class="inner-label">02</span>
+          <span class="inner-title">カラーパレット</span>
+          <span class="inner-arrow" id="palarr-${pid}">▼</span>
+        </div>
+      </div>
+      <div class="inner-body" id="pal-${pid}" style="display:none">
+        ${(p.palette||[]).map((g,gi) => groupHTML(p,gi)).join('')}
+        <div class="add-group-row">
+          <input class="add-group-input" id="addg-${pid}" type="text" placeholder="グループ名を追加..." onkeydown="if(event.key==='Enter')addGroup('${pid}')">
+          <button class="add-group-btn" onclick="addGroup('${pid}')">＋ グループ</button>
+        </div>
+      </div>
+    </div>`;
+
+  // refs
+  const refsInner = (p.refs&&p.refs.length)
+    ? p.refs.map((r,ri) => {
+        const isUrl = /^https?:\/\//.test(r.url||'');
+        return `<div class="ref-item">
+          ${r.label ? `<div class="ref-label-tag">${esc(r.label)}</div>` : ''}
+          <div class="ref-text">${isUrl ? `<a href="${esc(r.url)}" target="_blank">${esc(r.label||r.url)}</a>` : esc(r.url)}</div>
+          <button class="ref-action-btn" onclick="deleteRef('${pid}',${ri})">×</button>
+        </div>`;
+      }).join('')
+    : '<div class="ref-empty">まだありません</div>';
+
+  const refsHTML = `
+    <div class="inner-toggle">
+      <div class="inner-head">
+        <div class="inner-head-click" onclick="toggleInner('ref-${pid}','refarr-${pid}')">
+          <span class="inner-label">03</span>
+          <span class="inner-title">参考リンク</span>
+          <span class="inner-arrow" id="refarr-${pid}">▼</span>
+        </div>
+      </div>
+      <div class="inner-body" id="ref-${pid}" style="display:none">
+        <div class="ref-list-inner">${refsInner}</div>
+        <div class="ref-add-area">
+          <div class="ref-add-row">
+            <span class="ref-add-label">ラベル</span>
+            <input class="ref-add-input" id="rlab-${pid}" type="text" placeholder="公式サイト など">
+          </div>
+          <div class="ref-add-row">
+            <span class="ref-add-label">URL</span>
+            <input class="ref-add-input" id="rurl-${pid}" type="text" placeholder="https://..." onkeydown="if(event.key==='Enter')addRef('${pid}')">
+            <button class="ref-add-btn" onclick="addRef('${pid}')">追加</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // proj edit form
+  const editForm = `
+    <div class="proj-edit-form" id="pedit-${pid}">
+      <div class="proj-edit-row">
+        <span class="proj-edit-label">案件名</span>
+        <input class="proj-edit-input" id="pename-${pid}" value="${esc(p.name)}">
+      </div>
+      <div class="proj-edit-row">
+        <span class="proj-edit-label">タグ</span>
+        <input class="proj-edit-input" id="petag-${pid}" value="${esc(p.tag||'')}" placeholder="YouTube など">
+      </div>
+      <div class="proj-edit-row">
+        <span class="proj-edit-label">タグ色</span>
+        <input type="color" id="petagc-${pid}" value="${esc(p.tagColor||'#999999')}" style="width:40px;height:32px;border:none;cursor:pointer;border-radius:6px">
+      </div>
+      <div class="proj-edit-row">
+        <span class="proj-edit-label">ドット色</span>
+        <input type="color" id="pedotc-${pid}" value="${esc(p.dotColor||'#999999')}" style="width:40px;height:32px;border:none;cursor:pointer;border-radius:6px">
+      </div>
+      <div class="proj-edit-actions">
+        <button class="btn-cancel" onclick="toggleProjEdit('${pid}')">キャンセル</button>
+        <button class="btn-save" onclick="saveProjEdit('${pid}')">保存</button>
+      </div>
+    </div>`;
+
+  return `
+  <div class="proj-card">
+    <div class="proj-head">
+      <div class="proj-dot" style="background:${esc(p.dotColor||'#999')}" onclick="toggleProj('${pid}')"></div>
+      <div class="proj-name" onclick="toggleProj('${pid}')">${esc(p.name)}</div>
+      ${p.tag ? `<div class="proj-tag" style="background:${esc(p.tagColor||'#999')}">${esc(p.tag)}</div>` : ''}
+      <button class="proj-head-btn" onclick="toggleProjEdit('${pid}')" title="編集">✎</button>
+      <button class="proj-head-btn" onclick="deleteProject('${pid}')" title="削除">×</button>
+      <div class="proj-arrow" id="arr-${pid}" onclick="toggleProj('${pid}')">▼</div>
+    </div>
+    ${editForm}
+    <div class="proj-body" id="body-${pid}" style="display:none">
+      ${overviewHTML}
+      ${paletteHTML}
+      ${refsHTML}
+    </div>
+  </div>`;
+}
+
+function groupHTML(p, gi) {
+  const pid = p.id;
+  const g = p.palette[gi];
+  const colorsHTML = g.colors.map((c,ci) => {
+    const copyId = `copy-${pid}-${gi}-${ci}`;
+    const editId = `cedit-${pid}-${gi}-${ci}`;
+    const pfx    = `ce-${pid}-${gi}-${ci}`;
+    const apfx   = `ac-${pid}-${gi}`;
+    return `
+    <div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:${esc(c.hex)}"></div>
+        <div class="color-info">
+          <div class="color-name">${esc(c.name)}</div>
+          <div class="color-role">${esc(c.role)}</div>
+        </div>
+        <div class="color-code-wrap">
+          <div class="color-code">${esc(c.hex)}</div>
+          <button class="copy-btn" id="${copyId}" onclick="copyColor('${esc(c.hex)}','${copyId}')">コピー</button>
+          <button class="color-edit-btn" onclick="toggleColorEdit('${editId}')" title="編集">✎</button>
+          <button class="color-edit-btn" onclick="deleteColor('${pid}',${gi},${ci})" title="削除">×</button>
+        </div>
+      </div>
+      <div class="color-edit-form" id="${editId}">
+        <div class="color-edit-inner" style="padding:0 0 8px">
+          <div class="color-edit-field"><label>名前</label><input id="${pfx}-name" value="${esc(c.name)}"></div>
+          <div class="color-edit-field"><label>用途</label><input id="${pfx}-role" value="${esc(c.role)}"></div>
+          <div class="color-edit-field"><label>HEX</label><input id="${pfx}-hex" value="${esc(c.hex)}" placeholder="#000000"><input type="color" value="${esc(c.hex)}" oninput="document.getElementById('${pfx}-hex').value=this.value" style="width:36px;height:32px;border:none;cursor:pointer;border-radius:6px;flex-shrink:0"></div>
+          <div class="color-edit-btns">
+            <button class="btn-cancel" onclick="toggleColorEdit('${editId}')">キャンセル</button>
+            <button class="btn-save" onclick="saveColorEdit('${pid}',${gi},${ci})">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const apfx = `ac-${pid}-${gi}`;
+  const addFormId = `addcform-${pid}-${gi}`;
+  const addTriggerId = `addctr-${pid}-${gi}`;
+
+  return `
+  <div class="palette-group" style="border-bottom:1px solid var(--border);padding-bottom:8px">
+    <div class="palette-group-header">
+      <div class="palette-group-label">${esc(g.group)}</div>
+      <button class="group-del-btn" onclick="deleteGroup('${pid}',${gi})">グループ削除</button>
+    </div>
+    ${colorsHTML}
+    <div class="add-color-row">
+      <div class="add-color-trigger" id="${addTriggerId}" onclick="toggleAddColor('${pid}-${gi}')">＋ 色を追加</div>
+      <div class="add-color-form" id="${addFormId}" style="display:none">
+        <div class="add-color-field"><label>名前</label><input id="${apfx}-name" placeholder="色の名前"></div>
+        <div class="add-color-field"><label>用途</label><input id="${apfx}-role" placeholder="使い方・用途"></div>
+        <div class="add-color-field"><label>HEX</label><input id="${apfx}-hex" placeholder="#000000"><input type="color" value="#000000" oninput="document.getElementById('${apfx}-hex').value=this.value" style="width:36px;height:32px;border:none;cursor:pointer;border-radius:6px;flex-shrink:0"></div>
+        <div class="add-color-btns">
+          <button class="btn-cancel" onclick="toggleAddColor('${pid}-${gi}')">キャンセル</button>
+          <button class="btn-save" onclick="submitAddColor('${pid}',${gi})">追加</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+loadState();
+renderList();
+</script>
+</body>
+</html>
