@@ -273,7 +273,8 @@ function deleteProject(id) {
 // ── Project Edit ──
 function toggleProjEdit(id) {
   const el = document.getElementById('pedit-'+id);
-  el.style.display = el.style.display === 'none' ? '' : 'none';
+  const hidden = getComputedStyle(el).display === 'none';
+  el.style.display = hidden ? 'block' : 'none';
 }
 function saveProjEdit(id) {
   const p = getProj(id); if (!p) return;
