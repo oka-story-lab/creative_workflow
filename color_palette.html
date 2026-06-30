@@ -57,7 +57,7 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 
 /* OVERVIEW */
 .overview-block{padding:12px 16px}
-.overview-textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);resize:vertical;outline:none;line-height:1.8;min-height:80px;background:#fff}
+.overview-textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);resize:none;outline:none;line-height:1.8;min-height:80px;background:#fff;overflow:hidden}
 .overview-textarea:focus{border-color:var(--red)}
 .overview-save-btn{margin-top:6px;background:var(--red);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;display:block}
 
@@ -324,9 +324,16 @@ function toggleInner(bodyId, arrId) {
   el.style.display = open ? '' : 'none';
   ar.textContent = open ? '▲' : '▼';
   open ? openPanels.add(bodyId) : openPanels.delete(bodyId);
+  if (open) {
+    el.querySelectorAll('.overview-textarea').forEach(ta => autoResizeTextarea(ta));
+  }
 }
 
 // ── Overview ──
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
 function saveOverview(id) {
   const p = getProj(id); if (!p) return;
   p.overview = document.getElementById('ov-ta-'+id).value;
@@ -462,7 +469,7 @@ function projCardHTML(p) {
       </div>
       <div class="inner-body" id="ov-${pid}" style="display:none">
         <div class="overview-block">
-          <textarea class="overview-textarea" id="ov-ta-${pid}" placeholder="クライアント、目的、トンマナなどを自由に記録...">${esc(p.overview||'')}</textarea>
+          <textarea class="overview-textarea" id="ov-ta-${pid}" placeholder="クライアント、目的、トンマナなどを自由に記録..." oninput="autoResizeTextarea(this)">${esc(p.overview||'')}</textarea>
           <button class="overview-save-btn" onclick="saveOverview('${pid}')">保存</button>
         </div>
       </div>
