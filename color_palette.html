@@ -7,6 +7,7 @@
 <link rel="apple-touch-icon" href="image/スタイルブックロゴ.jpg">
 <link rel="icon" href="image/スタイルブックロゴ.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--red:#F52549;--green:#9BC01C;--navy:#1A1A1A;--gray:#999;--border:#EBEBEB}
@@ -57,9 +58,24 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 
 /* OVERVIEW */
 .overview-block{padding:12px 16px}
-.overview-textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);resize:none;outline:none;line-height:1.8;min-height:80px;background:#fff;overflow:hidden}
+.overview-textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);resize:none;outline:none;line-height:1.8;min-height:80px;background:#fff;overflow:hidden;display:none}
 .overview-textarea:focus{border-color:var(--red)}
-.overview-save-btn{margin-top:6px;background:var(--red);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;display:block}
+.overview-preview{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);line-height:1.8;min-height:60px;background:#fff;cursor:pointer}
+.overview-preview h1,.overview-preview h2,.overview-preview h3{font-weight:900;margin:8px 0 4px;color:var(--navy)}
+.overview-preview h1{font-size:16px}.overview-preview h2{font-size:14px}.overview-preview h3{font-size:13px}
+.overview-preview p{margin:4px 0}
+.overview-preview table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
+.overview-preview th,.overview-preview td{border:1px solid var(--border);padding:5px 8px;text-align:left}
+.overview-preview th{background:#f5f5f5;font-weight:700}
+.overview-preview ul,.overview-preview ol{padding-left:18px;margin:4px 0}
+.overview-preview li{margin:2px 0}
+.overview-preview strong{font-weight:900}
+.overview-preview em{font-style:italic;color:var(--gray)}
+.overview-preview hr{border:none;border-top:1px solid var(--border);margin:8px 0}
+.overview-preview code{background:#f5f5f5;padding:1px 5px;border-radius:4px;font-size:12px}
+.overview-edit-hint{font-size:11px;color:#CCC;margin-top:4px;font-family:'Nunito',sans-serif}
+.overview-save-btn{margin-top:6px;background:var(--red);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;display:none}
+.overview-cancel-btn{margin-top:6px;margin-left:6px;background:none;border:1.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:11px;color:var(--gray);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;display:none}
 
 /* COLOR PALETTE */
 .palette-group{padding:10px 16px 4px}
@@ -334,10 +350,37 @@ function autoResizeTextarea(el) {
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
 }
+function startEditOverview(id) {
+  document.getElementById('ov-preview-'+id).style.display = 'none';
+  document.getElementById('ov-hint-'+id).style.display = 'none';
+  const ta = document.getElementById('ov-ta-'+id);
+  ta.style.display = 'block';
+  document.getElementById('ov-save-'+id).style.display = 'inline-block';
+  document.getElementById('ov-cancel-'+id).style.display = 'inline-block';
+  ta.focus();
+  autoResizeTextarea(ta);
+}
+function cancelEditOverview(id) {
+  const p = getProj(id); if (!p) return;
+  document.getElementById('ov-ta-'+id).value = p.overview || '';
+  document.getElementById('ov-ta-'+id).style.display = 'none';
+  document.getElementById('ov-save-'+id).style.display = 'none';
+  document.getElementById('ov-cancel-'+id).style.display = 'none';
+  document.getElementById('ov-preview-'+id).style.display = '';
+  document.getElementById('ov-hint-'+id).style.display = '';
+}
 function saveOverview(id) {
   const p = getProj(id); if (!p) return;
   p.overview = document.getElementById('ov-ta-'+id).value;
-  saveState(); showToast('概要を保存しました');
+  saveState();
+  document.getElementById('ov-ta-'+id).style.display = 'none';
+  document.getElementById('ov-save-'+id).style.display = 'none';
+  document.getElementById('ov-cancel-'+id).style.display = 'none';
+  const preview = document.getElementById('ov-preview-'+id);
+  preview.innerHTML = p.overview ? marked.parse(p.overview) : '<span style="color:#CCC">クリックして編集...</span>';
+  preview.style.display = '';
+  document.getElementById('ov-hint-'+id).style.display = '';
+  showToast('概要を保存しました');
 }
 
 // ── Color: copy ──
@@ -469,8 +512,13 @@ function projCardHTML(p) {
       </div>
       <div class="inner-body" id="ov-${pid}" style="display:none">
         <div class="overview-block">
-          <textarea class="overview-textarea" id="ov-ta-${pid}" placeholder="クライアント、目的、トンマナなどを自由に記録..." oninput="autoResizeTextarea(this)">${esc(p.overview||'')}</textarea>
-          <button class="overview-save-btn" onclick="saveOverview('${pid}')">保存</button>
+          <div class="overview-preview" id="ov-preview-${pid}" onclick="startEditOverview('${pid}')">${(p.overview||'') ? marked.parse(p.overview) : '<span style="color:#CCC">クリックして編集...</span>'}</div>
+          <div class="overview-edit-hint" id="ov-hint-${pid}">クリックで編集</div>
+          <textarea class="overview-textarea" id="ov-ta-${pid}" placeholder="マークダウンで入力できます（# 見出し、**太字**、| テーブル | など）" oninput="autoResizeTextarea(this)">${esc(p.overview||'')}</textarea>
+          <div style="display:flex;gap:0">
+            <button class="overview-save-btn" id="ov-save-${pid}" onclick="saveOverview('${pid}')">保存</button>
+            <button class="overview-cancel-btn" id="ov-cancel-${pid}" onclick="cancelEditOverview('${pid}')">キャンセル</button>
+          </div>
         </div>
       </div>
     </div>`;
