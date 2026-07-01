@@ -80,7 +80,7 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 /* COLOR PALETTE */
 .palette-group{padding:10px 16px 4px}
 .palette-group-header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-.palette-group-label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;letter-spacing:2px;color:var(--gray);flex:1}
+.palette-group-label{font-family:'Zen Maru Gothic',sans-serif;font-size:13px;font-weight:900;color:var(--navy);flex:1}
 .group-del-btn{font-size:11px;color:#DDD;cursor:pointer;padding:2px 5px;border:none;background:none;border-radius:4px;transition:color 0.15s;font-family:'Nunito',sans-serif;font-weight:700}
 .group-del-btn:hover{color:var(--red)}
 .color-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -90,7 +90,7 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 .color-name{font-size:12px;font-weight:700;color:var(--navy)}
 .color-role{font-size:11px;color:var(--gray);margin-top:1px;line-height:1.4}
 .color-code-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.color-code{font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--gray);letter-spacing:1px}
+.color-code{font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--gray);letter-spacing:1px;cursor:pointer}
 .copy-btn{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;padding:4px 8px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--gray);cursor:pointer;transition:all 0.15s;white-space:nowrap}
 .copy-btn:hover{border-color:var(--red);color:var(--red)}
 .copy-btn.copied{border-color:var(--green);color:var(--green);background:#F6FFF0}
@@ -176,7 +176,7 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 </div>
 
 <script>
-const KEY = 'style_book_v3';
+const KEY = 'style_book_v4';
 
 const DEFAULT_PROJECTS = [
   {
@@ -374,10 +374,11 @@ function saveOverview(id) {
 
 // ── Color: copy ──
 function copyColor(hex, btnId) {
-  navigator.clipboard.writeText(hex).then(() => {
+  const code = hex.replace('#','');
+  navigator.clipboard.writeText(code).then(() => {
     const btn = document.getElementById(btnId);
     if (btn) { btn.textContent='✓ コピー済'; btn.classList.add('copied'); }
-    showToast(hex + ' をコピーしました');
+    showToast(code + ' をコピーしました');
     setTimeout(() => { if (btn) { btn.textContent='コピー'; btn.classList.remove('copied'); } }, 2000);
   });
 }
@@ -623,13 +624,13 @@ function groupHTML(p, gi) {
     return `
     <div>
       <div class="color-row">
-        <div class="color-swatch" style="background:${esc(c.hex)}"></div>
         <div class="color-info">
           <div class="color-name">${esc(c.name)}</div>
           <div class="color-role">${esc(c.role)}</div>
         </div>
         <div class="color-code-wrap">
-          <div class="color-code">${esc(c.hex)}</div>
+          <div class="color-swatch" style="background:${esc(c.hex)}"></div>
+          <div class="color-code">${esc(c.hex.replace('#',''))}</div>
           <button class="copy-btn" id="${copyId}" onclick="copyColor('${esc(c.hex)}','${copyId}')">コピー</button>
           <button class="color-edit-btn" onclick="toggleColorEdit('${editId}')" title="編集">✎</button>
           <button class="color-edit-btn" onclick="deleteColor('${pid}',${gi},${ci})" title="削除">×</button>
