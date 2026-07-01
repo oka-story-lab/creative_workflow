@@ -387,7 +387,8 @@ function copyColor(hex, btnId) {
 // ── Color: toggle edit form ──
 function toggleColorEdit(id) {
   const el = document.getElementById(id);
-  el.style.display = el.style.display === 'none' ? '' : 'none';
+  const hidden = getComputedStyle(el).display === 'none';
+  el.style.display = hidden ? '' : 'none';
 }
 
 // ── Color: save edit ──
