@@ -85,12 +85,13 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 .group-del-btn:hover{color:var(--red)}
 .color-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
 .color-row:last-child{border-bottom:none}
-.color-swatch{width:36px;height:36px;border-radius:8px;flex-shrink:0;border:1px solid rgba(0,0,0,0.06)}
-.color-info{flex:1;min-width:0}
+.color-swatch{width:32px;height:32px;border-radius:7px;flex-shrink:0;border:1px solid rgba(0,0,0,0.06)}
+.color-info{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.color-info-text{min-width:0}
 .color-name{font-size:12px;font-weight:700;color:var(--navy)}
 .color-role{font-size:11px;color:var(--gray);margin-top:1px;line-height:1.4}
+.color-code{font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--gray);letter-spacing:1px;cursor:pointer;flex-shrink:0}
 .color-code-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.color-code{font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--gray);letter-spacing:1px;cursor:pointer}
 .copy-btn{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;padding:4px 8px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--gray);cursor:pointer;transition:all 0.15s;white-space:nowrap}
 .copy-btn:hover{border-color:var(--red);color:var(--red)}
 .copy-btn.copied{border-color:var(--green);color:var(--green);background:#F6FFF0}
@@ -176,7 +177,7 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 </div>
 
 <script>
-const KEY = 'style_book_v4';
+const KEY = 'style_book_v5';
 
 const DEFAULT_PROJECTS = [
   {
@@ -625,12 +626,14 @@ function groupHTML(p, gi) {
     <div>
       <div class="color-row">
         <div class="color-info">
-          <div class="color-name">${esc(c.name)}</div>
-          <div class="color-role">${esc(c.role)}</div>
+          <div class="color-swatch" style="background:${esc(c.hex)}"></div>
+          <div class="color-info-text">
+            <div class="color-name">${esc(c.name)}</div>
+            <div class="color-role">${esc(c.role)}</div>
+          </div>
+          <div class="color-code">${esc(c.hex.replace('#',''))}</div>
         </div>
         <div class="color-code-wrap">
-          <div class="color-swatch" style="background:${esc(c.hex)}"></div>
-          <div class="color-code">${esc(c.hex.replace('#',''))}</div>
           <button class="copy-btn" id="${copyId}" onclick="copyColor('${esc(c.hex)}','${copyId}')">コピー</button>
           <button class="color-edit-btn" onclick="toggleColorEdit('${editId}')" title="編集">✎</button>
           <button class="color-edit-btn" onclick="deleteColor('${pid}',${gi},${ci})" title="削除">×</button>
