@@ -7,6 +7,7 @@
 <link rel="apple-touch-icon" href="image/ロゴ.png">
 <link rel="icon" href="image/ロゴ.png">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--red:#F52549;--pink:#D63070;--yellow:#F5B800;--green:#9BC01C;--navy:#1A1A1A;--gray:#999;--border:#EBEBEB}
@@ -30,6 +31,7 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 .proj-item:hover{background:#FAFAFA}
 .proj-dot{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0}
 .proj-name{flex:1;font-size:14px;font-weight:700}
+.proj-tag{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;letter-spacing:1.5px;padding:3px 8px;border-radius:20px;color:#fff;flex-shrink:0}
 .proj-prog{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--gray)}
 .proj-del{font-size:16px;color:#DDD;padding:4px 6px;border-radius:6px;transition:color 0.15s}
 .proj-del:hover{color:var(--red)}
@@ -48,6 +50,11 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 .proj-title-bar:focus{border-bottom:2px solid var(--red)}
 .title-edit-btn{font-size:11px;font-weight:700;color:var(--gray);cursor:pointer;white-space:nowrap;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;transition:all 0.15s;font-family:'Nunito',sans-serif}
 .title-edit-btn:hover{border-color:var(--red);color:var(--red)}
+.style-row{display:flex;align-items:center;gap:10px;margin:10px 20px 0;flex-wrap:wrap}
+.style-row input[type="text"]{border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;outline:none;width:150px;color:var(--navy)}
+.style-row input[type="text"]:focus{border-color:var(--red)}
+.style-row label{display:flex;align-items:center;gap:4px;font-family:'Nunito',sans-serif;font-size:10px;color:var(--gray)}
+.style-row input[type="color"]{width:26px;height:26px;border:none;cursor:pointer;border-radius:6px}
 
 /* PROGRESS */
 .prog-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
@@ -72,30 +79,98 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 .toggle-arrow{font-size:11px;color:var(--gray)}
 .toggle-body{border-top:1px solid var(--border);background:#FAFCFF}
 
-/* CLAUDE MD */
+/* OVERVIEW (file toolbar, still used for md load/download) */
 .claude-toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:#fff;flex-wrap:wrap}
 .claude-path{flex:1;font-size:12px;color:var(--gray);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .claude-file-btn{font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;padding:6px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;border:1.5px solid var(--border);background:#fff;color:var(--gray);transition:all 0.15s}
 .claude-file-btn:hover{border-color:var(--red);color:var(--red)}
 .claude-save-btn{font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;padding:6px 12px;border-radius:7px;cursor:pointer;white-space:nowrap;border:none;background:var(--red);color:#fff}
 .claude-save-btn:hover{opacity:0.88}
-.claude-textarea{width:100%;min-height:180px;border:none;outline:none;padding:14px 16px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);resize:vertical;line-height:1.8;background:#FAFCFF}
 #file-picker{display:none}
 
+/* OVERVIEW (markdown preview/edit) */
+.overview-block{padding:14px 16px}
+.overview-textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);resize:none;outline:none;line-height:1.8;min-height:80px;background:#fff;overflow:hidden;display:none}
+.overview-textarea:focus{border-color:var(--red)}
+.overview-preview{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);line-height:1.8;min-height:60px;background:#fff;cursor:pointer}
+.overview-preview h1,.overview-preview h2,.overview-preview h3{font-weight:900;margin:8px 0 4px;color:var(--navy)}
+.overview-preview h1{font-size:16px}.overview-preview h2{font-size:14px}.overview-preview h3{font-size:13px}
+.overview-preview p{margin:4px 0}
+.overview-preview table{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
+.overview-preview th,.overview-preview td{border:1px solid var(--border);padding:5px 8px;text-align:left}
+.overview-preview th{background:#f5f5f5;font-weight:700}
+.overview-preview ul,.overview-preview ol{padding-left:18px;margin:4px 0}
+.overview-preview li{margin:2px 0}
+.overview-preview strong{font-weight:900}
+.overview-preview em{font-style:italic;color:var(--gray)}
+.overview-preview hr{border:none;border-top:1px solid var(--border);margin:8px 0}
+.overview-preview code{background:#f5f5f5;padding:1px 5px;border-radius:4px;font-size:12px}
+.overview-edit-hint{font-size:11px;color:#CCC;margin-top:4px;font-family:'Nunito',sans-serif}
+.overview-save-btn{margin-top:6px;background:var(--red);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;display:none}
+.overview-cancel-btn{margin-top:6px;margin-left:6px;background:none;border:1.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:11px;color:var(--gray);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;display:none}
+
+/* PALETTE */
+.palette-group{padding:10px 16px 4px}
+.palette-group-header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.palette-group-label{font-family:'Zen Maru Gothic',sans-serif;font-size:13px;font-weight:900;color:var(--navy);flex:1}
+.group-del-btn{font-size:11px;color:#DDD;cursor:pointer;padding:2px 5px;border:none;background:none;border-radius:4px;transition:color 0.15s;font-family:'Nunito',sans-serif;font-weight:700}
+.group-del-btn:hover{color:var(--red)}
+.color-row{display:grid;grid-template-columns:36px minmax(80px,180px) minmax(80px,260px) max-content max-content;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)}
+.color-row:last-child{border-bottom:none}
+.color-swatch{width:32px;height:32px;border-radius:7px;flex-shrink:0;border:1px solid rgba(0,0,0,0.06)}
+.color-label{min-width:0}
+.color-name{font-size:12px;font-weight:700;color:var(--navy)}
+.color-role{font-size:11px;color:var(--gray);line-height:1.4;margin-top:1px}
+.color-code-wrap{display:flex;align-items:center;gap:5px}
+.color-code{font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--gray);letter-spacing:1px;white-space:nowrap}
+.copy-btn{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;padding:4px 8px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--gray);cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.copy-btn:hover{border-color:var(--red);color:var(--red)}
+.copy-btn.copied{border-color:var(--green);color:var(--green);background:#F6FFF0}
+.color-action-btns{display:flex;align-items:center;gap:2px}
+.color-edit-btn{font-size:12px;color:#DDD;cursor:pointer;padding:3px 5px;border:none;background:none;border-radius:4px;transition:color 0.15s;line-height:1}
+.color-edit-btn:hover{color:var(--red)}
+.color-edit-form{display:none;padding:8px 0 4px}
+.color-edit-inner{display:flex;flex-direction:column;gap:6px}
+.color-edit-field{display:flex;align-items:center;gap:6px}
+.color-edit-field label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;color:var(--gray);min-width:36px}
+.color-edit-field input{flex:1;border:1.5px solid var(--border);border-radius:7px;padding:6px 9px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.color-edit-field input:focus{border-color:var(--red)}
+.color-edit-btns{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
+.btn-save{background:var(--red);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer}
+.btn-cancel{background:none;border:1.5px solid var(--border);border-radius:7px;padding:7px 12px;font-size:11px;color:var(--gray);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700}
+
+/* ADD COLOR / GROUP */
+.add-color-row{padding:8px 16px 10px;border-top:1px dashed var(--border)}
+.add-color-trigger{font-size:12px;font-weight:700;color:#CCC;cursor:pointer;font-family:'Nunito',sans-serif;transition:color 0.15s}
+.add-color-trigger:hover{color:var(--red)}
+.add-color-form{display:none;flex-direction:column;gap:6px}
+.add-color-field{display:flex;align-items:center;gap:6px}
+.add-color-field label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;color:var(--gray);min-width:36px}
+.add-color-field input{flex:1;border:1.5px solid var(--border);border-radius:7px;padding:6px 9px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.add-color-field input:focus{border-color:var(--red)}
+.add-color-btns{display:flex;gap:6px;justify-content:flex-end}
+.add-group-row{padding:8px 16px 12px;display:flex;gap:8px;border-top:1px solid var(--border)}
+.add-group-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.add-group-input:focus{border-color:var(--red)}
+.add-group-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap}
+
 /* REFS */
-.ref-list{padding:4px 0}
-.ref-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.ref-list-inner{padding:4px 0}
+.ref-item{display:flex;align-items:flex-start;gap:8px;padding:9px 16px;border-bottom:1px solid var(--border)}
 .ref-item:last-child{border-bottom:none}
+.ref-label-tag{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;background:#FFF0F2;color:var(--red);padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:2px;white-space:nowrap}
 .ref-text{flex:1;font-size:13px;color:var(--navy);word-break:break-all;line-height:1.5}
 .ref-text a{color:var(--red);text-decoration:none}
 .ref-text a:hover{text-decoration:underline}
-.ref-del{font-size:14px;color:#DDD;cursor:pointer;padding:2px 5px;border-radius:4px;flex-shrink:0;transition:color 0.15s}
-.ref-del:hover{color:var(--red)}
-.ref-add-row{display:flex;gap:8px;padding:10px 14px;background:#fff;border-top:1px solid var(--border)}
-.ref-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;font-family:'Zen Maru Gothic',sans-serif;outline:none;color:var(--navy)}
-.ref-input:focus{border-color:var(--red)}
-.ref-add-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap}
+.ref-action-btn{font-size:12px;color:#DDD;cursor:pointer;padding:2px 4px;border:none;background:none;border-radius:4px;transition:color 0.15s;line-height:1;flex-shrink:0}
+.ref-action-btn:hover{color:var(--red)}
 .ref-empty{padding:16px;font-size:12px;color:#CCC;text-align:center;font-family:'Nunito',sans-serif}
+.ref-add-area{padding:10px 14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;background:#fff}
+.ref-add-row{display:flex;gap:6px;align-items:center}
+.ref-add-label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;color:var(--gray);min-width:36px}
+.ref-add-input{flex:1;border:1.5px solid var(--border);border-radius:7px;padding:7px 10px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--navy);outline:none}
+.ref-add-input:focus{border-color:var(--red)}
+.ref-add-btn{background:var(--red);color:#fff;border:none;border-radius:7px;padding:7px 12px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap}
 
 /* CHECKLIST */
 .checklist-sec{margin:0 16px 4px}
@@ -171,6 +246,10 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 .extra-action-btn{font-size:13px;color:#CCC;padding:3px 5px;cursor:pointer;border-radius:4px;transition:color 0.15s;line-height:1;user-select:none;background:none;border:none;font-family:inherit}
 .extra-action-btn:hover:not(:disabled){color:var(--red)}
 .extra-action-btn:disabled{opacity:0.2;cursor:default}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;padding:10px 20px;border-radius:20px;opacity:0;transition:all 0.2s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -184,6 +263,7 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
   <div class="hero-badge">WORKFLOW</div>
 </div>
 
+<div class="toast" id="toast"></div>
 <input type="file" id="file-picker" accept=".md,.txt">
 <div id="view-list"></div>
 <div id="view-detail" style="display:none"></div>
@@ -245,12 +325,70 @@ const SEQ_A=[
   {k:'A6',d:'BGM②'},
 ];
 
-const KEY='cl_mp_v4';
+const KEY='oka_hub_v1';
 let state={projects:[]};
 let currentId=null;
 let seqOpen=false;
 
-function load(){try{const d=localStorage.getItem(KEY);if(d)state=JSON.parse(d);}catch(e){state={projects:[]}}}
+function load(){
+  try{
+    const d=localStorage.getItem(KEY);
+    if(d){state=JSON.parse(d);return;}
+  }catch(e){}
+  migrateFromOldApps();
+}
+function migrateFromOldApps(){
+  let wf=[],sb=[];
+  try{const d=localStorage.getItem('cl_mp_v4');if(d)wf=(JSON.parse(d).projects)||[];}catch(e){}
+  try{const d=localStorage.getItem('style_book_v7');if(d)sb=(JSON.parse(d).projects)||[];}catch(e){}
+  if(!wf.length&&!sb.length){state={projects:[]};return;}
+  const merged=[];
+  const usedSbIds=new Set();
+  wf.forEach(w=>{
+    const match=sb.find(s=>s.name===w.name);
+    if(match)usedSbIds.add(match.id);
+    const refs=[];
+    if(match&&match.refs)match.refs.forEach(r=>refs.push({label:r.label||'',url:r.url||''}));
+    if(w.refs)w.refs.forEach(r=>{if(typeof r==='string'&&r)refs.push({label:'',url:r});});
+    merged.push({
+      id:w.id,name:w.name,
+      dotColor:match?(match.dotColor||'#999999'):'#999999',
+      tag:match?(match.tag||''):'',
+      tagColor:match?(match.tagColor||'#999999'):'#999999',
+      deadline:w.deadline||'',
+      checks:w.checks||Array(TOTAL).fill(false),
+      extras:w.extras||{prep:[],edit:[],confirm:[]},
+      memos:w.memos||{},
+      order:w.order,
+      overview:(match&&match.overview)?match.overview:(w.claudeMd||''),
+      claudePath:w.claudePath||'',
+      refs:refs,
+      palette:match?(match.palette||[]):[],
+      reflection:w.reflection||''
+    });
+  });
+  sb.forEach(s=>{
+    if(usedSbIds.has(s.id))return;
+    merged.push({
+      id:s.id,name:s.name,
+      dotColor:s.dotColor||'#999999',
+      tag:s.tag||'',
+      tagColor:s.tagColor||'#999999',
+      deadline:'',
+      checks:Array(TOTAL).fill(false),
+      extras:{prep:[],edit:[],confirm:[]},
+      memos:{},
+      order:undefined,
+      overview:s.overview||'',
+      claudePath:'',
+      refs:(s.refs||[]).map(r=>({label:r.label||'',url:r.url||''})),
+      palette:s.palette||[],
+      reflection:''
+    });
+  });
+  state={projects:merged};
+  save();
+}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 function getProj(id){return state.projects.find(p=>p.id===id)}
 function ensureExtras(p){if(!p.extras)p.extras={prep:[],edit:[],confirm:[]};}
@@ -272,6 +410,13 @@ function doneCnt(p){ensureExtras(p);const base=p.checks.filter(Boolean).length;c
 function pct(p){const t=totalSteps(p);return t?Math.round(doneCnt(p)/t*100):0;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
+// ── Toast ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
 /* ---- LIST ---- */
 function renderList(){
   const el=document.getElementById('view-list');
@@ -282,8 +427,9 @@ function renderList(){
     <div class="card" style="padding:0">
       ${ps.map(p=>`
         <div class="proj-item" onclick="openProj('${p.id}')">
-          <div class="proj-dot" style="${pct(p)>0?'background:var(--red)':''}"></div>
+          <div class="proj-dot" style="background:${p.dotColor&&p.dotColor!=='#999999'?esc(p.dotColor):(pct(p)>0?'var(--red)':'var(--border)')}"></div>
           <div class="proj-name">${esc(p.name)}</div>
+          ${p.tag?`<div class="proj-tag" style="background:${esc(p.tagColor||'#999999')}">${esc(p.tag)}</div>`:''}
           <div class="proj-prog" style="${pct(p)>0?'color:var(--red)':''}">${pct(p)}%</div>
           <div class="proj-del" onclick="event.stopPropagation();delProj('${p.id}')">×</div>
         </div>`).join('')}
@@ -298,7 +444,7 @@ function renderList(){
 function addProj(){
   const inp=document.getElementById('new-name');
   const name=inp.value.trim();if(!name)return;
-  const p={id:'p'+Date.now(),name,deadline:'',checks:Array(TOTAL).fill(false)};
+  const p={id:'p'+Date.now(),name,dotColor:'#999999',tag:'',tagColor:'#999999',deadline:'',checks:Array(TOTAL).fill(false),overview:'',claudePath:'',refs:[],palette:[]};
   state.projects.push(p);save();openProj(p.id);
 }
 function delProj(id){
@@ -326,6 +472,11 @@ function saveTitle(){
   save();renderList();
 }
 
+/* ---- TAG / DOT COLOR ---- */
+function saveTag(v){const p=getProj(currentId);if(!p)return;p.tag=v;save();renderList();}
+function saveTagColor(v){const p=getProj(currentId);if(!p)return;p.tagColor=v;save();renderList();}
+function saveDotColor(v){const p=getProj(currentId);if(!p)return;p.dotColor=v;save();renderList();}
+
 /* ---- DETAIL ---- */
 function renderSection(sec,stdSteps,stdOffset,p){
   ensureOrder(p);
@@ -345,6 +496,8 @@ function renderSection(sec,stdSteps,stdOffset,p){
 function renderDetail(){
   const p=getProj(currentId);if(!p)return showList();
   ensureExtras(p);ensureMemos(p);ensureOrder(p);
+  if(!p.palette)p.palette=[];
+  if(!p.refs)p.refs=[];
   const done=doneCnt(p),total=totalSteps(p),perc=Math.round(done/total*100);
   const eo=STEPS_PREP.length,co=eo+STEPS_EDIT.length;
   const prepSec=renderSection('prep',STEPS_PREP,0,p);
@@ -356,6 +509,11 @@ function renderDetail(){
     <div class="title-row">
       <input class="proj-title-bar" id="title-input" value="${esc(p.name)}" readonly onkeydown="if(event.key==='Enter')saveTitle()">
       <div class="title-edit-btn" id="title-edit-btn" onclick="startEditTitle()">編集</div>
+    </div>
+    <div class="style-row">
+      <input type="text" id="tag-input" value="${esc(p.tag||'')}" placeholder="タグ（YouTube など）" onchange="saveTag(this.value)">
+      <label>タグ色<input type="color" id="tagcolor-input" value="${esc(p.tagColor||'#999999')}" onchange="saveTagColor(this.value)"></label>
+      <label>ドット色<input type="color" id="dotcolor-input" value="${esc(p.dotColor||'#999999')}" onchange="saveDotColor(this.value)"></label>
     </div>
 
     <div class="sec-label">PROGRESS</div>
@@ -375,33 +533,58 @@ function renderDetail(){
     </div>
 
     <div class="toggle-section">
-      <div class="toggle-head" onclick="togglePanel('claude-body','claude-arr')">
+      <div class="toggle-head" onclick="togglePanel('ov-body','ov-arr')">
         <span class="toggle-label">01</span>
-        <span class="toggle-title">概要（Claude.md）</span>
-        <span class="toggle-arrow" id="claude-arr">▼</span>
+        <span class="toggle-title">概要</span>
+        <span class="toggle-arrow" id="ov-arr">▼</span>
       </div>
-      <div class="toggle-body" id="claude-body" style="display:none">
+      <div class="toggle-body" id="ov-body" style="display:none">
         <div class="claude-toolbar">
           <span class="claude-path" id="claude-path">${esc(p.claudePath||'ファイル未選択')}</span>
-          <button class="claude-file-btn" onclick="pickClaudeFile()">ファイルを選択</button>
-          <button class="claude-save-btn" onclick="downloadClaudeMd()">保存してDL</button>
+          <button class="claude-file-btn" onclick="pickOverviewFile()">ファイルを選択</button>
+          <button class="claude-save-btn" onclick="downloadOverview()">保存してDL</button>
         </div>
-        <textarea class="claude-textarea" id="claude-text" placeholder="ファイルを選択するか、ここに直接貼り付けてください..."
-          oninput="saveClaudeMd(this.value)">${esc(p.claudeMd||'')}</textarea>
+        <div class="overview-block">
+          <div class="overview-preview" id="ov-preview" onclick="startEditOverview()">${p.overview?marked.parse(p.overview):'<span style="color:#CCC">クリックして編集...</span>'}</div>
+          <textarea class="overview-textarea" id="ov-ta" placeholder="マークダウンで入力できます（# 見出し、**太字**、| テーブル | など）" oninput="autoResizeTextarea(this)">${esc(p.overview||'')}</textarea>
+          <div class="overview-edit-hint" id="ov-hint">クリックで編集</div>
+          <div>
+            <button class="overview-save-btn" id="ov-save" onclick="saveOverview()">保存</button>
+            <button class="overview-cancel-btn" id="ov-cancel" onclick="cancelEditOverview()">キャンセル</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toggle-section">
+      <div class="toggle-head" onclick="togglePanel('pal-body','pal-arr')">
+        <span class="toggle-label">02</span>
+        <span class="toggle-title">カラーパレット</span>
+        <span class="toggle-arrow" id="pal-arr">▼</span>
+      </div>
+      <div class="toggle-body" id="pal-body" style="display:none">
+        ${renderPalette(p)}
       </div>
     </div>
 
     <div class="toggle-section">
       <div class="toggle-head" onclick="togglePanel('ref-body','ref-arr')">
-        <span class="toggle-label">02</span>
-        <span class="toggle-title">参考動画・リンク</span>
+        <span class="toggle-label">03</span>
+        <span class="toggle-title">参考リンク</span>
         <span class="toggle-arrow" id="ref-arr">▼</span>
       </div>
       <div class="toggle-body" id="ref-body" style="display:none">
-        <div class="ref-list" id="ref-list">${refListHTML(p)}</div>
-        <div class="ref-add-row">
-          <input class="ref-input" id="ref-input" type="text" placeholder="URL またはメモを入力..." onkeydown="if(event.key==='Enter')addRef()">
-          <button class="ref-add-btn" onclick="addRef()">追加</button>
+        <div class="ref-list-inner" id="ref-list">${refListHTML(p)}</div>
+        <div class="ref-add-area">
+          <div class="ref-add-row">
+            <span class="ref-add-label">ラベル</span>
+            <input class="ref-add-input" id="ref-label-input" type="text" placeholder="公式サイト など">
+          </div>
+          <div class="ref-add-row">
+            <span class="ref-add-label">URL</span>
+            <input class="ref-add-input" id="ref-url-input" type="text" placeholder="https://..." onkeydown="if(event.key==='Enter')addRef()">
+            <button class="ref-add-btn" onclick="addRef()">追加</button>
+          </div>
         </div>
       </div>
     </div>
@@ -513,8 +696,40 @@ function saveMemo(idx,v){const p=getProj(currentId);if(!p)return;ensureMemos(p);
 function saveMemoExtra(key,v){const p=getProj(currentId);if(!p)return;ensureMemos(p);p.memos[key]=v;save();}
 function saveReflection(v){const p=getProj(currentId);if(!p)return;p.reflection=v;save();}
 
-/* ---- CLAUDE MD ---- */
-function pickClaudeFile(){
+/* ---- OVERVIEW (markdown) ---- */
+function autoResizeTextarea(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+function startEditOverview(){
+  document.getElementById('ov-preview').style.display='none';
+  document.getElementById('ov-hint').style.display='none';
+  const ta=document.getElementById('ov-ta');
+  ta.style.display='block';
+  document.getElementById('ov-save').style.display='inline-block';
+  document.getElementById('ov-cancel').style.display='inline-block';
+  ta.focus();autoResizeTextarea(ta);
+}
+function cancelEditOverview(){
+  const p=getProj(currentId);if(!p)return;
+  document.getElementById('ov-ta').value=p.overview||'';
+  document.getElementById('ov-ta').style.display='none';
+  document.getElementById('ov-save').style.display='none';
+  document.getElementById('ov-cancel').style.display='none';
+  document.getElementById('ov-preview').style.display='';
+  document.getElementById('ov-hint').style.display='';
+}
+function saveOverview(){
+  const p=getProj(currentId);if(!p)return;
+  p.overview=document.getElementById('ov-ta').value;
+  save();
+  document.getElementById('ov-ta').style.display='none';
+  document.getElementById('ov-save').style.display='none';
+  document.getElementById('ov-cancel').style.display='none';
+  const preview=document.getElementById('ov-preview');
+  preview.innerHTML=p.overview?marked.parse(p.overview):'<span style="color:#CCC">クリックして編集...</span>';
+  preview.style.display='';
+  document.getElementById('ov-hint').style.display='';
+  showToast('概要を保存しました');
+}
+function pickOverviewFile(){
   const fp=document.getElementById('file-picker');
   fp.onchange=function(){
     const file=fp.files[0];if(!file)return;
@@ -522,47 +737,161 @@ function pickClaudeFile(){
     reader.onload=function(e){
       const content=e.target.result;
       const p=getProj(currentId);if(!p)return;
-      p.claudeMd=content;p.claudePath=file.name;save();
-      const ta=document.getElementById('claude-text');
-      const pa=document.getElementById('claude-path');
-      if(ta)ta.value=content;if(pa)pa.textContent=file.name;
+      p.overview=content;p.claudePath=file.name;save();renderDetail();
     };
     reader.readAsText(file,'UTF-8');
     fp.value='';
   };
   fp.click();
 }
-function saveClaudeMd(v){const p=getProj(currentId);if(!p)return;p.claudeMd=v;save();}
-function downloadClaudeMd(){
+function downloadOverview(){
   const p=getProj(currentId);if(!p)return;
-  const ta=document.getElementById('claude-text');
-  const content=ta?ta.value:(p.claudeMd||'');
+  const content=p.overview||'';
   const blob=new Blob([content],{type:'text/markdown'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=p.claudePath||'claude.md';
+  a.download=p.claudePath||(p.name+'.md');
   a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ---- PALETTE ---- */
+function renderPalette(p){
+  return (p.palette||[]).map((g,gi)=>groupHTML(p,gi)).join('') + `
+    <div class="add-group-row">
+      <input class="add-group-input" id="addg-input" type="text" placeholder="グループ名を追加..." onkeydown="if(event.key==='Enter')addGroup()">
+      <button class="add-group-btn" onclick="addGroup()">＋ グループ</button>
+    </div>`;
+}
+function groupHTML(p,gi){
+  const g=p.palette[gi];
+  const colorsHTML=(g.colors||[]).map((c,ci)=>{
+    const copyId=`copy-${gi}-${ci}`;
+    const editId=`cedit-${gi}-${ci}`;
+    return `
+    <div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:${esc(c.hex)}"></div>
+        <div class="color-label"><div class="color-name">${esc(c.name)}</div><div class="color-role">${esc(c.role)}</div></div>
+        <div class="color-code-wrap">
+          <span class="color-code">${esc(c.hex.replace('#',''))}</span>
+          <button class="copy-btn" id="${copyId}" onclick="copyColor('${esc(c.hex)}','${copyId}')">コピー</button>
+        </div>
+        <div class="color-action-btns">
+          <button class="color-edit-btn" onclick="toggleColorEdit('${editId}')" title="編集">✎</button>
+          <button class="color-edit-btn" onclick="deleteColor(${gi},${ci})" title="削除">×</button>
+        </div>
+      </div>
+      <div class="color-edit-form" id="${editId}">
+        <div class="color-edit-inner">
+          <div class="color-edit-field"><label>名前</label><input id="ce-${gi}-${ci}-name" value="${esc(c.name)}"></div>
+          <div class="color-edit-field"><label>用途</label><input id="ce-${gi}-${ci}-role" value="${esc(c.role)}"></div>
+          <div class="color-edit-field"><label>HEX</label><input id="ce-${gi}-${ci}-hex" value="${esc(c.hex)}" placeholder="#000000"><input type="color" value="${esc(c.hex)}" oninput="document.getElementById('ce-${gi}-${ci}-hex').value=this.value" style="width:36px;height:32px;border:none;cursor:pointer;border-radius:6px;flex-shrink:0"></div>
+          <div class="color-edit-btns">
+            <button class="btn-cancel" onclick="toggleColorEdit('${editId}')">キャンセル</button>
+            <button class="btn-save" onclick="saveColorEdit(${gi},${ci})">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const addFormId=`addcform-${gi}`;
+  const addTriggerId=`addctr-${gi}`;
+
+  return `
+  <div class="palette-group" style="border-bottom:1px solid var(--border);padding-bottom:8px">
+    <div class="palette-group-header">
+      <div class="palette-group-label">${esc(g.group)}</div>
+      <button class="group-del-btn" onclick="deleteGroup(${gi})">グループ削除</button>
+    </div>
+    ${colorsHTML}
+    <div class="add-color-row">
+      <div class="add-color-trigger" id="${addTriggerId}" onclick="toggleAddColor(${gi})">＋ 色を追加</div>
+      <div class="add-color-form" id="${addFormId}" style="display:none">
+        <div class="add-color-field"><label>名前</label><input id="ac-${gi}-name" placeholder="色の名前"></div>
+        <div class="add-color-field"><label>用途</label><input id="ac-${gi}-role" placeholder="使い方・用途"></div>
+        <div class="add-color-field"><label>HEX</label><input id="ac-${gi}-hex" placeholder="#000000"><input type="color" value="#000000" oninput="document.getElementById('ac-${gi}-hex').value=this.value" style="width:36px;height:32px;border:none;cursor:pointer;border-radius:6px;flex-shrink:0"></div>
+        <div class="add-color-btns">
+          <button class="btn-cancel" onclick="toggleAddColor(${gi})">キャンセル</button>
+          <button class="btn-save" onclick="submitAddColor(${gi})">追加</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function copyColor(hex,btnId){
+  const code=hex.replace('#','');
+  navigator.clipboard.writeText(code).then(()=>{
+    const btn=document.getElementById(btnId);
+    if(btn){btn.textContent='✓ コピー済';btn.classList.add('copied');}
+    showToast(code+' をコピーしました');
+    setTimeout(()=>{if(btn){btn.textContent='コピー';btn.classList.remove('copied');}},2000);
+  });
+}
+function toggleColorEdit(id){const el=document.getElementById(id);const hidden=getComputedStyle(el).display==='none';el.style.display=hidden?'block':'none';}
+function saveColorEdit(gi,ci){
+  const p=getProj(currentId);if(!p)return;
+  const name=document.getElementById(`ce-${gi}-${ci}-name`).value.trim();
+  const role=document.getElementById(`ce-${gi}-${ci}-role`).value.trim();
+  const hex=document.getElementById(`ce-${gi}-${ci}-hex`).value.trim();
+  if(name)p.palette[gi].colors[ci].name=name;
+  if(role)p.palette[gi].colors[ci].role=role;
+  if(/^#[0-9A-Fa-f]{3,6}$/.test(hex))p.palette[gi].colors[ci].hex=hex.toUpperCase();
+  save();renderDetail();showToast('色を更新しました');
+}
+function deleteColor(gi,ci){const p=getProj(currentId);if(!p)return;p.palette[gi].colors.splice(ci,1);save();renderDetail();}
+function toggleAddColor(gi){
+  const el=document.getElementById('addcform-'+gi);const tr=document.getElementById('addctr-'+gi);
+  const open=el.style.display==='none';el.style.display=open?'flex':'none';tr.style.display=open?'none':'';
+}
+function submitAddColor(gi){
+  const p=getProj(currentId);if(!p)return;
+  const name=document.getElementById(`ac-${gi}-name`).value.trim();
+  const role=document.getElementById(`ac-${gi}-role`).value.trim();
+  const hex=document.getElementById(`ac-${gi}-hex`).value.trim();
+  if(!name||!hex)return;
+  const h=/^#[0-9A-Fa-f]{3,6}$/.test(hex)?hex.toUpperCase():'#'+hex.toUpperCase();
+  p.palette[gi].colors.push({name,role,hex:h});
+  save();renderDetail();showToast('色を追加しました');
+}
+function addGroup(){
+  const p=getProj(currentId);if(!p)return;
+  const inp=document.getElementById('addg-input');
+  const name=inp.value.trim();if(!name)return;
+  if(!p.palette)p.palette=[];
+  p.palette.push({group:name,colors:[]});
+  save();renderDetail();
+}
+function deleteGroup(gi){
+  const p=getProj(currentId);if(!p)return;
+  if(!confirm('このグループを削除しますか？'))return;
+  p.palette.splice(gi,1);save();renderDetail();
 }
 
 /* ---- REFS ---- */
 function refListHTML(p){
   if(!p.refs||!p.refs.length)return`<div class="ref-empty">まだありません</div>`;
   return p.refs.map((r,i)=>{
-    const isUrl=/^https?:\/\//.test(r);
+    const isUrl=/^https?:\/\//.test(r.url||'');
     return `<div class="ref-item">
-      <div class="ref-text">${isUrl?`<a href="${esc(r)}" target="_blank">${esc(r)}</a>`:esc(r)}</div>
-      <div class="ref-del" onclick="delRef(${i})">×</div>
+      ${r.label?`<div class="ref-label-tag">${esc(r.label)}</div>`:''}
+      <div class="ref-text">${isUrl?`<a href="${esc(r.url)}" target="_blank">${esc(r.label||r.url)}</a>`:esc(r.url)}</div>
+      <button class="ref-action-btn" onclick="delRef(${i})">×</button>
     </div>`;
   }).join('');
 }
 function addRef(){
-  const inp=document.getElementById('ref-input');
-  const v=inp.value.trim();if(!v)return;
   const p=getProj(currentId);if(!p)return;
+  const labelInp=document.getElementById('ref-label-input');
+  const urlInp=document.getElementById('ref-url-input');
+  const label=labelInp.value.trim();
+  const url=urlInp.value.trim();
+  if(!url)return;
   if(!p.refs)p.refs=[];
-  p.refs.push(v);save();
+  p.refs.push({label,url});
+  save();
+  labelInp.value='';urlInp.value='';
   document.getElementById('ref-list').innerHTML=refListHTML(p);
-  inp.value='';
 }
 function delRef(i){
   const p=getProj(currentId);if(!p)return;
