@@ -266,7 +266,8 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 <div class="toast" id="toast"></div>
 <input type="file" id="file-picker" accept=".md,.txt">
 <div id="view-list"></div>
-<div id="view-detail" style="display:none"></div>
+<div id="view-client" style="display:none"></div>
+<div id="view-project" style="display:none"></div>
 
 <script>
 const STEPS_PREP=[
@@ -325,23 +326,30 @@ const SEQ_A=[
   {k:'A6',d:'BGM②'},
 ];
 
-const KEY='oka_hub_v1';
-let state={projects:[]};
-let currentId=null;
+const KEY='oka_hub_v2';
+let state={clients:[]};
+let currentClientId=null;
+let currentVideoId=null;
 let seqOpen=false;
 
+/* ---- LOAD / MIGRATION ---- */
 function load(){
   try{
     const d=localStorage.getItem(KEY);
     if(d){state=JSON.parse(d);return;}
   }catch(e){}
-  migrateFromOldApps();
+  state={clients:buildClientsFromLegacy()};
+  save();
 }
-function migrateFromOldApps(){
+function legacyFlatList(){
+  try{
+    const d=localStorage.getItem('oka_hub_v1');
+    if(d){const parsed=JSON.parse(d);if(parsed&&parsed.projects)return parsed.projects;}
+  }catch(e){}
   let wf=[],sb=[];
   try{const d=localStorage.getItem('cl_mp_v4');if(d)wf=(JSON.parse(d).projects)||[];}catch(e){}
   try{const d=localStorage.getItem('style_book_v7');if(d)sb=(JSON.parse(d).projects)||[];}catch(e){}
-  if(!wf.length&&!sb.length){state={projects:[]};return;}
+  if(!wf.length&&!sb.length)return[];
   const merged=[];
   const usedSbIds=new Set();
   wf.forEach(w=>{
@@ -386,76 +394,152 @@ function migrateFromOldApps(){
       reflection:''
     });
   });
-  state={projects:merged};
-  save();
+  return merged;
+}
+function flatToVideo(p){
+  return {
+    id:p.id,name:p.name,deadline:p.deadline||'',
+    checks:p.checks||Array(TOTAL).fill(false),
+    extras:p.extras||{prep:[],edit:[],confirm:[]},
+    memos:p.memos||{},
+    order:p.order,
+    reflection:p.reflection||''
+  };
+}
+function flatToClient(p){
+  return {
+    id:'c'+p.id,name:p.name,
+    dotColor:p.dotColor||'#999999',tag:p.tag||'',tagColor:p.tagColor||'#999999',
+    overview:p.overview||'',claudePath:p.claudePath||'',
+    refs:p.refs||[],palette:p.palette||[],
+    projects:[flatToVideo(p)]
+  };
+}
+function buildClientsFromLegacy(){
+  const flat=legacyFlatList();
+  if(!flat.length)return[];
+  // 手作業指定：この2件だけは同一クライアントとして統合する
+  const camp=flat.find(p=>p.name==='新日本空調サービス_キャンプ動画');
+  const japas=flat.find(p=>p.name==='JAPAS CHANNEL');
+  const clients=[];
+  const usedIds=new Set();
+  if(camp&&japas){
+    usedIds.add(camp.id);usedIds.add(japas.id);
+    clients.push({
+      id:'c_shinnihon_kucho',
+      name:'新日本空調サービス',
+      dotColor:japas.dotColor||'#0056A5',
+      tag:japas.tag||'JAPAS CHANNEL',
+      tagColor:japas.tagColor||'#FF0000',
+      overview:japas.overview||'',
+      claudePath:'',
+      refs:japas.refs||[],
+      palette:japas.palette||[],
+      projects:[{...flatToVideo(camp),name:'キャンプ動画'}]
+    });
+  }
+  // それ以外は安全側：1案件＝1クライアント×1動画としてそのまま昇格
+  flat.forEach(p=>{
+    if(usedIds.has(p.id))return;
+    clients.push(flatToClient(p));
+  });
+  return clients;
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
-function getProj(id){return state.projects.find(p=>p.id===id)}
-function ensureExtras(p){if(!p.extras)p.extras={prep:[],edit:[],confirm:[]};}
-function ensureMemos(p){if(!p.memos)p.memos={};}
-function ensureOrder(p){
-  ensureExtras(p);
-  if(!p.order)p.order={};
+function getClient(id){return state.clients.find(c=>c.id===id);}
+function getCurrentClient(){return getClient(currentClientId);}
+function getCurrentVideo(){const c=getCurrentClient();if(!c)return null;return (c.projects||[]).find(v=>v.id===currentVideoId);}
+function ensureExtras(v){if(!v.extras)v.extras={prep:[],edit:[],confirm:[]};}
+function ensureMemos(v){if(!v.memos)v.memos={};}
+function ensureOrder(v){
+  ensureExtras(v);
+  if(!v.order)v.order={};
   const lens={prep:STEPS_PREP.length,edit:STEPS_EDIT.length,confirm:STEPS_CONFIRM.length};
   ['prep','edit','confirm'].forEach(sec=>{
-    if(!p.order[sec]){
+    if(!v.order[sec]){
       const stdKeys=Array.from({length:lens[sec]},(_,i)=>i);
-      const extraKeys=p.extras[sec].map((_,i)=>'e'+i);
-      p.order[sec]=[...stdKeys,...extraKeys];
+      const extraKeys=v.extras[sec].map((_,i)=>'e'+i);
+      v.order[sec]=[...stdKeys,...extraKeys];
     }
   });
 }
-function totalSteps(p){ensureExtras(p);return TOTAL+p.extras.prep.length+p.extras.edit.length+p.extras.confirm.length;}
-function doneCnt(p){ensureExtras(p);const base=p.checks.filter(Boolean).length;const ex=Object.values(p.extras).flat().filter(e=>e.done).length;return base+ex;}
-function pct(p){const t=totalSteps(p);return t?Math.round(doneCnt(p)/t*100):0;}
+function totalSteps(v){ensureExtras(v);return TOTAL+v.extras.prep.length+v.extras.edit.length+v.extras.confirm.length;}
+function doneCnt(v){ensureExtras(v);const base=v.checks.filter(Boolean).length;const ex=Object.values(v.extras).flat().filter(e=>e.done).length;return base+ex;}
+function pct(v){const t=totalSteps(v);return t?Math.round(doneCnt(v)/t*100):0;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
-// ── Toast ──
+/* ---- Toast ---- */
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
 }
 
-/* ---- LIST ---- */
-function renderList(){
+/* ---- VIEW SWITCH ---- */
+function showClientList(){
+  currentClientId=null;currentVideoId=null;save();
+  document.getElementById('view-list').style.display='';
+  document.getElementById('view-client').style.display='none';
+  document.getElementById('view-project').style.display='none';
+  seqOpen=false;renderClientList();
+}
+function openClient(id){
+  currentClientId=id;currentVideoId=null;seqOpen=false;save();
+  document.getElementById('view-list').style.display='none';
+  document.getElementById('view-client').style.display='';
+  document.getElementById('view-project').style.display='none';
+  renderClientDetail();
+}
+function openVideo(id){
+  currentVideoId=id;seqOpen=false;save();
+  document.getElementById('view-list').style.display='none';
+  document.getElementById('view-client').style.display='none';
+  document.getElementById('view-project').style.display='';
+  renderVideoDetail();
+}
+function backToClient(){
+  currentVideoId=null;seqOpen=false;save();
+  document.getElementById('view-client').style.display='';
+  document.getElementById('view-project').style.display='none';
+  renderClientDetail();
+}
+
+/* ---- CLIENT LIST ---- */
+function renderClientList(){
   const el=document.getElementById('view-list');
-  const ps=state.projects;
+  const cs=state.clients;
   el.innerHTML=`
-    <div class="sec-label">案件一覧</div>
-    ${ps.length===0?`<div class="card" style="color:#CCC;font-size:13px;text-align:center;padding:24px">案件がまだありません</div>`:`
+    <div class="sec-label">クライアント一覧</div>
+    ${cs.length===0?`<div class="card" style="color:#CCC;font-size:13px;text-align:center;padding:24px">クライアントがまだいません</div>`:`
     <div class="card" style="padding:0">
-      ${ps.map(p=>`
-        <div class="proj-item" onclick="openProj('${p.id}')">
-          <div class="proj-dot" style="background:${p.dotColor&&p.dotColor!=='#999999'?esc(p.dotColor):(pct(p)>0?'var(--red)':'var(--border)')}"></div>
-          <div class="proj-name">${esc(p.name)}</div>
-          ${p.tag?`<div class="proj-tag" style="background:${esc(p.tagColor||'#999999')}">${esc(p.tag)}</div>`:''}
-          <div class="proj-prog" style="${pct(p)>0?'color:var(--red)':''}">${pct(p)}%</div>
-          <div class="proj-del" onclick="event.stopPropagation();delProj('${p.id}')">×</div>
+      ${cs.map(c=>`
+        <div class="proj-item" onclick="openClient('${c.id}')">
+          <div class="proj-dot" style="background:${c.dotColor&&c.dotColor!=='#999999'?esc(c.dotColor):'var(--border)'}"></div>
+          <div class="proj-name">${esc(c.name)}</div>
+          ${c.tag?`<div class="proj-tag" style="background:${esc(c.tagColor||'#999999')}">${esc(c.tag)}</div>`:''}
+          <div class="proj-prog">${(c.projects||[]).length}本</div>
+          <div class="proj-del" onclick="event.stopPropagation();delClient('${c.id}')">×</div>
         </div>`).join('')}
     </div>`}
-    <div class="sec-label" style="margin-top:20px">新しい案件を追加</div>
+    <div class="sec-label" style="margin-top:20px">新しいクライアントを追加</div>
     <div class="add-row">
-      <input class="add-input" id="new-name" type="text" placeholder="案件名を入力..." onkeydown="if(event.key==='Enter')addProj()">
-      <button class="add-btn" onclick="addProj()">追加</button>
+      <input class="add-input" id="new-client-name" type="text" placeholder="クライアント名を入力..." onkeydown="if(event.key==='Enter')addClient()">
+      <button class="add-btn" onclick="addClient()">追加</button>
     </div>`;
 }
-
-function addProj(){
-  const inp=document.getElementById('new-name');
+function addClient(){
+  const inp=document.getElementById('new-client-name');
   const name=inp.value.trim();if(!name)return;
-  const p={id:'p'+Date.now(),name,dotColor:'#999999',tag:'',tagColor:'#999999',deadline:'',checks:Array(TOTAL).fill(false),overview:'',claudePath:'',refs:[],palette:[]};
-  state.projects.push(p);save();openProj(p.id);
+  const c={id:'c'+Date.now(),name,dotColor:'#999999',tag:'',tagColor:'#999999',overview:'',claudePath:'',refs:[],palette:[],projects:[]};
+  state.clients.push(c);save();openClient(c.id);
 }
-function delProj(id){
-  if(!confirm('この案件を削除しますか？'))return;
-  state.projects=state.projects.filter(p=>p.id!==id);
-  if(currentId===id){currentId=null;showList();}else{save();renderList();}
+function delClient(id){
+  if(!confirm('このクライアントを削除しますか？（中の動画案件もすべて削除されます）'))return;
+  state.clients=state.clients.filter(c=>c.id!==id);
+  if(currentClientId===id){showClientList();}else{save();renderClientList();}
 }
-function showList(){save();document.getElementById('view-list').style.display='';document.getElementById('view-detail').style.display='none';seqOpen=false;renderList();}
-function openProj(id){currentId=id;seqOpen=false;save();document.getElementById('view-list').style.display='none';document.getElementById('view-detail').style.display='';renderDetail();}
 
-/* ---- TITLE EDIT ---- */
+/* ---- TITLE EDIT (client名 / 動画名 共用) ---- */
 function startEditTitle(){
   const inp=document.getElementById('title-input');
   inp.removeAttribute('readonly');inp.focus();inp.select();
@@ -464,72 +548,49 @@ function startEditTitle(){
 }
 function saveTitle(){
   const inp=document.getElementById('title-input');
-  const p=getProj(currentId);if(!p)return;
-  const v=inp.value.trim();if(v)p.name=v;
-  inp.setAttribute('readonly','');inp.value=p.name;
+  const v=inp.value.trim();
+  if(currentVideoId){
+    const vid=getCurrentVideo();if(!vid)return;if(v)vid.name=v;inp.value=vid.name;
+  }else{
+    const c=getCurrentClient();if(!c)return;if(v)c.name=v;inp.value=c.name;
+  }
+  inp.setAttribute('readonly','');
   document.getElementById('title-edit-btn').textContent='編集';
   document.getElementById('title-edit-btn').onclick=startEditTitle;
-  save();renderList();
+  save();renderClientList();
 }
 
-/* ---- TAG / DOT COLOR ---- */
-function saveTag(v){const p=getProj(currentId);if(!p)return;p.tag=v;save();renderList();}
-function saveTagColor(v){const p=getProj(currentId);if(!p)return;p.tagColor=v;save();renderList();}
-function saveDotColor(v){const p=getProj(currentId);if(!p)return;p.dotColor=v;save();renderList();}
+/* ---- TAG / DOT COLOR (client単位) ---- */
+function saveTag(v){const c=getCurrentClient();if(!c)return;c.tag=v;save();renderClientList();}
+function saveTagColor(v){const c=getCurrentClient();if(!c)return;c.tagColor=v;save();renderClientList();}
+function saveDotColor(v){const c=getCurrentClient();if(!c)return;c.dotColor=v;save();renderClientList();}
 
-/* ---- DETAIL ---- */
-function renderSection(sec,stdSteps,stdOffset,p){
-  ensureOrder(p);
-  return p.order[sec].map(key=>{
-    if(typeof key==='number'){
-      const idx=stdOffset+key;
-      return itemHTML(stdSteps[key],idx,p.checks[idx],p.memos[idx]||'');
-    }
-    const eIdx=parseInt(key.slice(1));
-    const e=p.extras[sec][eIdx];
-    if(!e)return'';
-    const arr=p.order[sec],pos=arr.indexOf(key);
-    return extraItemHTML(e,eIdx,sec,key,pos>0,pos<arr.length-1,p.memos['e'+sec[0]+eIdx]||'');
-  }).join('');
+/* ---- CLIENT DETAIL ---- */
+function videoItemHTML(v){
+  const p=pct(v);
+  return `<div class="proj-item" onclick="openVideo('${v.id}')">
+    <div class="proj-dot" style="${p>0?'background:var(--red)':''}"></div>
+    <div class="proj-name">${esc(v.name)}</div>
+    <div class="proj-prog" style="${p>0?'color:var(--red)':''}">${p}%</div>
+    <div class="proj-del" onclick="event.stopPropagation();delVideo('${v.id}')">×</div>
+  </div>`;
 }
+function renderClientDetail(){
+  const c=getCurrentClient();if(!c)return showClientList();
+  if(!c.palette)c.palette=[];
+  if(!c.refs)c.refs=[];
+  if(!c.projects)c.projects=[];
 
-function renderDetail(){
-  const p=getProj(currentId);if(!p)return showList();
-  ensureExtras(p);ensureMemos(p);ensureOrder(p);
-  if(!p.palette)p.palette=[];
-  if(!p.refs)p.refs=[];
-  const done=doneCnt(p),total=totalSteps(p),perc=Math.round(done/total*100);
-  const eo=STEPS_PREP.length,co=eo+STEPS_EDIT.length;
-  const prepSec=renderSection('prep',STEPS_PREP,0,p);
-  const editSec=renderSection('edit',STEPS_EDIT,eo,p);
-  const confirmSec=renderSection('confirm',STEPS_CONFIRM,co,p);
-
-  document.getElementById('view-detail').innerHTML=`
-    <div class="back-btn" onclick="showList()">← 案件一覧</div>
+  document.getElementById('view-client').innerHTML=`
+    <div class="back-btn" onclick="showClientList()">← クライアント一覧</div>
     <div class="title-row">
-      <input class="proj-title-bar" id="title-input" value="${esc(p.name)}" readonly onkeydown="if(event.key==='Enter')saveTitle()">
+      <input class="proj-title-bar" id="title-input" value="${esc(c.name)}" readonly onkeydown="if(event.key==='Enter')saveTitle()">
       <div class="title-edit-btn" id="title-edit-btn" onclick="startEditTitle()">編集</div>
     </div>
     <div class="style-row">
-      <input type="text" id="tag-input" value="${esc(p.tag||'')}" placeholder="タグ（YouTube など）" onchange="saveTag(this.value)">
-      <label>タグ色<input type="color" id="tagcolor-input" value="${esc(p.tagColor||'#999999')}" onchange="saveTagColor(this.value)"></label>
-      <label>ドット色<input type="color" id="dotcolor-input" value="${esc(p.dotColor||'#999999')}" onchange="saveDotColor(this.value)"></label>
-    </div>
-
-    <div class="sec-label">PROGRESS</div>
-    <div class="card">
-      <div class="prog-row"><div class="prog-num">${perc}%</div><div class="prog-count">${done} / ${total} 完了</div></div>
-      <div class="track"><div class="fill" style="width:${perc}%"></div></div>
-    </div>
-
-    <div class="sec-label">SCHEDULE</div>
-    <div class="card">
-      <div class="sch-grid">
-        <div class="sf"><label>納期</label><input type="date" id="dl" value="${p.deadline||''}" onchange="saveDl(this.value)"></div>
-        <div class="sf"><label>粗カット完了</label><input type="text" id="s1" readonly placeholder="—"></div>
-        <div class="sf"><label>テロップ完了</label><input type="text" id="s2" readonly placeholder="—"></div>
-        <div class="sf"><label>書き出し・チェック</label><input type="text" id="s3" readonly placeholder="—"></div>
-      </div>
+      <input type="text" id="tag-input" value="${esc(c.tag||'')}" placeholder="タグ（YouTube など）" onchange="saveTag(this.value)">
+      <label>タグ色<input type="color" id="tagcolor-input" value="${esc(c.tagColor||'#999999')}" onchange="saveTagColor(this.value)"></label>
+      <label>ドット色<input type="color" id="dotcolor-input" value="${esc(c.dotColor||'#999999')}" onchange="saveDotColor(this.value)"></label>
     </div>
 
     <div class="toggle-section">
@@ -540,13 +601,13 @@ function renderDetail(){
       </div>
       <div class="toggle-body" id="ov-body" style="display:none">
         <div class="claude-toolbar">
-          <span class="claude-path" id="claude-path">${esc(p.claudePath||'ファイル未選択')}</span>
+          <span class="claude-path" id="claude-path">${esc(c.claudePath||'ファイル未選択')}</span>
           <button class="claude-file-btn" onclick="pickOverviewFile()">ファイルを選択</button>
           <button class="claude-save-btn" onclick="downloadOverview()">保存してDL</button>
         </div>
         <div class="overview-block">
-          <div class="overview-preview" id="ov-preview" onclick="startEditOverview()">${p.overview?marked.parse(p.overview):'<span style="color:#CCC">クリックして編集...</span>'}</div>
-          <textarea class="overview-textarea" id="ov-ta" placeholder="マークダウンで入力できます（# 見出し、**太字**、| テーブル | など）" oninput="autoResizeTextarea(this)">${esc(p.overview||'')}</textarea>
+          <div class="overview-preview" id="ov-preview" onclick="startEditOverview()">${c.overview?marked.parse(c.overview):'<span style="color:#CCC">クリックして編集...</span>'}</div>
+          <textarea class="overview-textarea" id="ov-ta" placeholder="マークダウンで入力できます（# 見出し、**太字**、| テーブル | など）" oninput="autoResizeTextarea(this)">${esc(c.overview||'')}</textarea>
           <div class="overview-edit-hint" id="ov-hint">クリックで編集</div>
           <div>
             <button class="overview-save-btn" id="ov-save" onclick="saveOverview()">保存</button>
@@ -563,7 +624,7 @@ function renderDetail(){
         <span class="toggle-arrow" id="pal-arr">▼</span>
       </div>
       <div class="toggle-body" id="pal-body" style="display:none">
-        ${renderPalette(p)}
+        ${renderPalette(c)}
       </div>
     </div>
 
@@ -574,7 +635,7 @@ function renderDetail(){
         <span class="toggle-arrow" id="ref-arr">▼</span>
       </div>
       <div class="toggle-body" id="ref-body" style="display:none">
-        <div class="ref-list-inner" id="ref-list">${refListHTML(p)}</div>
+        <div class="ref-list-inner" id="ref-list">${refListHTML(c)}</div>
         <div class="ref-add-area">
           <div class="ref-add-row">
             <span class="ref-add-label">ラベル</span>
@@ -586,6 +647,80 @@ function renderDetail(){
             <button class="ref-add-btn" onclick="addRef()">追加</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="sec-label">04　案件進捗</div>
+    ${c.projects.length===0?`<div class="card" style="color:#CCC;font-size:13px;text-align:center;padding:20px">動画案件がまだありません</div>`:`
+    <div class="card" style="padding:0">
+      ${c.projects.map(v=>videoItemHTML(v)).join('')}
+    </div>`}
+    <div class="add-row" style="margin-top:10px">
+      <input class="add-input" id="new-video-name" type="text" placeholder="動画名を入力..." onkeydown="if(event.key==='Enter')addVideo()">
+      <button class="add-btn" onclick="addVideo()">追加</button>
+    </div>`;
+}
+function addVideo(){
+  const c=getCurrentClient();if(!c)return;
+  const inp=document.getElementById('new-video-name');
+  const name=inp.value.trim();if(!name)return;
+  if(!c.projects)c.projects=[];
+  c.projects.push({id:'v'+Date.now(),name,deadline:'',checks:Array(TOTAL).fill(false)});
+  save();renderClientDetail();
+}
+function delVideo(id){
+  if(!confirm('この動画案件を削除しますか？'))return;
+  const c=getCurrentClient();if(!c)return;
+  c.projects=c.projects.filter(v=>v.id!==id);
+  save();renderClientDetail();
+}
+
+/* ---- VIDEO DETAIL ---- */
+function renderSection(sec,stdSteps,stdOffset,v){
+  ensureOrder(v);
+  return v.order[sec].map(key=>{
+    if(typeof key==='number'){
+      const idx=stdOffset+key;
+      return itemHTML(stdSteps[key],idx,v.checks[idx],v.memos[idx]||'');
+    }
+    const eIdx=parseInt(key.slice(1));
+    const e=v.extras[sec][eIdx];
+    if(!e)return'';
+    const arr=v.order[sec],pos=arr.indexOf(key);
+    return extraItemHTML(e,eIdx,sec,key,pos>0,pos<arr.length-1,v.memos['e'+sec[0]+eIdx]||'');
+  }).join('');
+}
+function renderVideoDetail(){
+  const c=getCurrentClient();if(!c)return showClientList();
+  const v=getCurrentVideo();
+  if(!v){backToClient();return;}
+  ensureExtras(v);ensureMemos(v);ensureOrder(v);
+  const done=doneCnt(v),total=totalSteps(v),perc=Math.round(done/total*100);
+  const eo=STEPS_PREP.length,co=eo+STEPS_EDIT.length;
+  const prepSec=renderSection('prep',STEPS_PREP,0,v);
+  const editSec=renderSection('edit',STEPS_EDIT,eo,v);
+  const confirmSec=renderSection('confirm',STEPS_CONFIRM,co,v);
+
+  document.getElementById('view-project').innerHTML=`
+    <div class="back-btn" onclick="backToClient()">← ${esc(c.name)}</div>
+    <div class="title-row">
+      <input class="proj-title-bar" id="title-input" value="${esc(v.name)}" readonly onkeydown="if(event.key==='Enter')saveTitle()">
+      <div class="title-edit-btn" id="title-edit-btn" onclick="startEditTitle()">編集</div>
+    </div>
+
+    <div class="sec-label">PROGRESS</div>
+    <div class="card">
+      <div class="prog-row"><div class="prog-num">${perc}%</div><div class="prog-count">${done} / ${total} 完了</div></div>
+      <div class="track"><div class="fill" style="width:${perc}%"></div></div>
+    </div>
+
+    <div class="sec-label">SCHEDULE</div>
+    <div class="card">
+      <div class="sch-grid">
+        <div class="sf"><label>納期</label><input type="date" id="dl" value="${v.deadline||''}" onchange="saveDl(this.value)"></div>
+        <div class="sf"><label>粗カット完了</label><input type="text" id="s1" readonly placeholder="—"></div>
+        <div class="sf"><label>テロップ完了</label><input type="text" id="s2" readonly placeholder="—"></div>
+        <div class="sf"><label>書き出し・チェック</label><input type="text" id="s3" readonly placeholder="—"></div>
       </div>
     </div>
 
@@ -614,10 +749,10 @@ function renderDetail(){
       <div class="refl-head">お疲れさまでした！</div>
       <div class="refl-sublabel">気づきと成果</div>
       <textarea class="refl-textarea" placeholder="この案件を通じての気づき、改善点、成果などを自由に記録してください..."
-        oninput="saveReflection(this.value)">${esc(p.reflection||'')}</textarea>
+        oninput="saveReflection(this.value)">${esc(v.reflection||'')}</textarea>
     </div>`;
 
-  if(p.deadline)calcDates(p.deadline);
+  if(v.deadline)calcDates(v.deadline);
   if(seqOpen){const sp=document.getElementById('seq-panel');if(sp)sp.classList.add('open');}
 }
 
@@ -653,7 +788,6 @@ function itemHTML(s,idx,checked,memo){
     ${seqPanel}
   </div>`;
 }
-
 function extraItemHTML(e,idx,sec,key,canUp,canDown,memo){
   const memoKey=`e${sec[0]}${idx}`;
   const upBtn=canUp
@@ -691,12 +825,12 @@ function extraItemHTML(e,idx,sec,key,canUp,canDown,memo){
   </div>`;
 }
 
-/* ---- MEMO / REFLECTION ---- */
-function saveMemo(idx,v){const p=getProj(currentId);if(!p)return;ensureMemos(p);p.memos[idx]=v;save();}
-function saveMemoExtra(key,v){const p=getProj(currentId);if(!p)return;ensureMemos(p);p.memos[key]=v;save();}
-function saveReflection(v){const p=getProj(currentId);if(!p)return;p.reflection=v;save();}
+/* ---- MEMO / REFLECTION (動画単位) ---- */
+function saveMemo(idx,v){const vid=getCurrentVideo();if(!vid)return;ensureMemos(vid);vid.memos[idx]=v;save();}
+function saveMemoExtra(key,v){const vid=getCurrentVideo();if(!vid)return;ensureMemos(vid);vid.memos[key]=v;save();}
+function saveReflection(v){const vid=getCurrentVideo();if(!vid)return;vid.reflection=v;save();}
 
-/* ---- OVERVIEW (markdown) ---- */
+/* ---- OVERVIEW (markdown, client単位) ---- */
 function autoResizeTextarea(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 function startEditOverview(){
   document.getElementById('ov-preview').style.display='none';
@@ -708,8 +842,8 @@ function startEditOverview(){
   ta.focus();autoResizeTextarea(ta);
 }
 function cancelEditOverview(){
-  const p=getProj(currentId);if(!p)return;
-  document.getElementById('ov-ta').value=p.overview||'';
+  const c=getCurrentClient();if(!c)return;
+  document.getElementById('ov-ta').value=c.overview||'';
   document.getElementById('ov-ta').style.display='none';
   document.getElementById('ov-save').style.display='none';
   document.getElementById('ov-cancel').style.display='none';
@@ -717,14 +851,14 @@ function cancelEditOverview(){
   document.getElementById('ov-hint').style.display='';
 }
 function saveOverview(){
-  const p=getProj(currentId);if(!p)return;
-  p.overview=document.getElementById('ov-ta').value;
+  const c=getCurrentClient();if(!c)return;
+  c.overview=document.getElementById('ov-ta').value;
   save();
   document.getElementById('ov-ta').style.display='none';
   document.getElementById('ov-save').style.display='none';
   document.getElementById('ov-cancel').style.display='none';
   const preview=document.getElementById('ov-preview');
-  preview.innerHTML=p.overview?marked.parse(p.overview):'<span style="color:#CCC">クリックして編集...</span>';
+  preview.innerHTML=c.overview?marked.parse(c.overview):'<span style="color:#CCC">クリックして編集...</span>';
   preview.style.display='';
   document.getElementById('ov-hint').style.display='';
   showToast('概要を保存しました');
@@ -736,8 +870,8 @@ function pickOverviewFile(){
     const reader=new FileReader();
     reader.onload=function(e){
       const content=e.target.result;
-      const p=getProj(currentId);if(!p)return;
-      p.overview=content;p.claudePath=file.name;save();renderDetail();
+      const c=getCurrentClient();if(!c)return;
+      c.overview=content;c.claudePath=file.name;save();renderClientDetail();
     };
     reader.readAsText(file,'UTF-8');
     fp.value='';
@@ -745,36 +879,36 @@ function pickOverviewFile(){
   fp.click();
 }
 function downloadOverview(){
-  const p=getProj(currentId);if(!p)return;
-  const content=p.overview||'';
+  const c=getCurrentClient();if(!c)return;
+  const content=c.overview||'';
   const blob=new Blob([content],{type:'text/markdown'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=p.claudePath||(p.name+'.md');
+  a.download=c.claudePath||(c.name+'.md');
   a.click();URL.revokeObjectURL(a.href);
 }
 
-/* ---- PALETTE ---- */
-function renderPalette(p){
-  return (p.palette||[]).map((g,gi)=>groupHTML(p,gi)).join('') + `
+/* ---- PALETTE (client単位) ---- */
+function renderPalette(c){
+  return (c.palette||[]).map((g,gi)=>groupHTML(c,gi)).join('') + `
     <div class="add-group-row">
       <input class="add-group-input" id="addg-input" type="text" placeholder="グループ名を追加..." onkeydown="if(event.key==='Enter')addGroup()">
       <button class="add-group-btn" onclick="addGroup()">＋ グループ</button>
     </div>`;
 }
-function groupHTML(p,gi){
-  const g=p.palette[gi];
-  const colorsHTML=(g.colors||[]).map((c,ci)=>{
+function groupHTML(c,gi){
+  const g=c.palette[gi];
+  const colorsHTML=(g.colors||[]).map((cl,ci)=>{
     const copyId=`copy-${gi}-${ci}`;
     const editId=`cedit-${gi}-${ci}`;
     return `
     <div>
       <div class="color-row">
-        <div class="color-swatch" style="background:${esc(c.hex)}"></div>
-        <div class="color-label"><div class="color-name">${esc(c.name)}</div><div class="color-role">${esc(c.role)}</div></div>
+        <div class="color-swatch" style="background:${esc(cl.hex)}"></div>
+        <div class="color-label"><div class="color-name">${esc(cl.name)}</div><div class="color-role">${esc(cl.role)}</div></div>
         <div class="color-code-wrap">
-          <span class="color-code">${esc(c.hex.replace('#',''))}</span>
-          <button class="copy-btn" id="${copyId}" onclick="copyColor('${esc(c.hex)}','${copyId}')">コピー</button>
+          <span class="color-code">${esc(cl.hex.replace('#',''))}</span>
+          <button class="copy-btn" id="${copyId}" onclick="copyColor('${esc(cl.hex)}','${copyId}')">コピー</button>
         </div>
         <div class="color-action-btns">
           <button class="color-edit-btn" onclick="toggleColorEdit('${editId}')" title="編集">✎</button>
@@ -783,9 +917,9 @@ function groupHTML(p,gi){
       </div>
       <div class="color-edit-form" id="${editId}">
         <div class="color-edit-inner">
-          <div class="color-edit-field"><label>名前</label><input id="ce-${gi}-${ci}-name" value="${esc(c.name)}"></div>
-          <div class="color-edit-field"><label>用途</label><input id="ce-${gi}-${ci}-role" value="${esc(c.role)}"></div>
-          <div class="color-edit-field"><label>HEX</label><input id="ce-${gi}-${ci}-hex" value="${esc(c.hex)}" placeholder="#000000"><input type="color" value="${esc(c.hex)}" oninput="document.getElementById('ce-${gi}-${ci}-hex').value=this.value" style="width:36px;height:32px;border:none;cursor:pointer;border-radius:6px;flex-shrink:0"></div>
+          <div class="color-edit-field"><label>名前</label><input id="ce-${gi}-${ci}-name" value="${esc(cl.name)}"></div>
+          <div class="color-edit-field"><label>用途</label><input id="ce-${gi}-${ci}-role" value="${esc(cl.role)}"></div>
+          <div class="color-edit-field"><label>HEX</label><input id="ce-${gi}-${ci}-hex" value="${esc(cl.hex)}" placeholder="#000000"><input type="color" value="${esc(cl.hex)}" oninput="document.getElementById('ce-${gi}-${ci}-hex').value=this.value" style="width:36px;height:32px;border:none;cursor:pointer;border-radius:6px;flex-shrink:0"></div>
           <div class="color-edit-btns">
             <button class="btn-cancel" onclick="toggleColorEdit('${editId}')">キャンセル</button>
             <button class="btn-save" onclick="saveColorEdit(${gi},${ci})">保存</button>
@@ -830,48 +964,48 @@ function copyColor(hex,btnId){
 }
 function toggleColorEdit(id){const el=document.getElementById(id);const hidden=getComputedStyle(el).display==='none';el.style.display=hidden?'block':'none';}
 function saveColorEdit(gi,ci){
-  const p=getProj(currentId);if(!p)return;
+  const c=getCurrentClient();if(!c)return;
   const name=document.getElementById(`ce-${gi}-${ci}-name`).value.trim();
   const role=document.getElementById(`ce-${gi}-${ci}-role`).value.trim();
   const hex=document.getElementById(`ce-${gi}-${ci}-hex`).value.trim();
-  if(name)p.palette[gi].colors[ci].name=name;
-  if(role)p.palette[gi].colors[ci].role=role;
-  if(/^#[0-9A-Fa-f]{3,6}$/.test(hex))p.palette[gi].colors[ci].hex=hex.toUpperCase();
-  save();renderDetail();showToast('色を更新しました');
+  if(name)c.palette[gi].colors[ci].name=name;
+  if(role)c.palette[gi].colors[ci].role=role;
+  if(/^#[0-9A-Fa-f]{3,6}$/.test(hex))c.palette[gi].colors[ci].hex=hex.toUpperCase();
+  save();renderClientDetail();showToast('色を更新しました');
 }
-function deleteColor(gi,ci){const p=getProj(currentId);if(!p)return;p.palette[gi].colors.splice(ci,1);save();renderDetail();}
+function deleteColor(gi,ci){const c=getCurrentClient();if(!c)return;c.palette[gi].colors.splice(ci,1);save();renderClientDetail();}
 function toggleAddColor(gi){
   const el=document.getElementById('addcform-'+gi);const tr=document.getElementById('addctr-'+gi);
   const open=el.style.display==='none';el.style.display=open?'flex':'none';tr.style.display=open?'none':'';
 }
 function submitAddColor(gi){
-  const p=getProj(currentId);if(!p)return;
+  const c=getCurrentClient();if(!c)return;
   const name=document.getElementById(`ac-${gi}-name`).value.trim();
   const role=document.getElementById(`ac-${gi}-role`).value.trim();
   const hex=document.getElementById(`ac-${gi}-hex`).value.trim();
   if(!name||!hex)return;
   const h=/^#[0-9A-Fa-f]{3,6}$/.test(hex)?hex.toUpperCase():'#'+hex.toUpperCase();
-  p.palette[gi].colors.push({name,role,hex:h});
-  save();renderDetail();showToast('色を追加しました');
+  c.palette[gi].colors.push({name,role,hex:h});
+  save();renderClientDetail();showToast('色を追加しました');
 }
 function addGroup(){
-  const p=getProj(currentId);if(!p)return;
+  const c=getCurrentClient();if(!c)return;
   const inp=document.getElementById('addg-input');
   const name=inp.value.trim();if(!name)return;
-  if(!p.palette)p.palette=[];
-  p.palette.push({group:name,colors:[]});
-  save();renderDetail();
+  if(!c.palette)c.palette=[];
+  c.palette.push({group:name,colors:[]});
+  save();renderClientDetail();
 }
 function deleteGroup(gi){
-  const p=getProj(currentId);if(!p)return;
+  const c=getCurrentClient();if(!c)return;
   if(!confirm('このグループを削除しますか？'))return;
-  p.palette.splice(gi,1);save();renderDetail();
+  c.palette.splice(gi,1);save();renderClientDetail();
 }
 
-/* ---- REFS ---- */
-function refListHTML(p){
-  if(!p.refs||!p.refs.length)return`<div class="ref-empty">まだありません</div>`;
-  return p.refs.map((r,i)=>{
+/* ---- REFS (client単位) ---- */
+function refListHTML(c){
+  if(!c.refs||!c.refs.length)return`<div class="ref-empty">まだありません</div>`;
+  return c.refs.map((r,i)=>{
     const isUrl=/^https?:\/\//.test(r.url||'');
     return `<div class="ref-item">
       ${r.label?`<div class="ref-label-tag">${esc(r.label)}</div>`:''}
@@ -881,25 +1015,25 @@ function refListHTML(p){
   }).join('');
 }
 function addRef(){
-  const p=getProj(currentId);if(!p)return;
+  const c=getCurrentClient();if(!c)return;
   const labelInp=document.getElementById('ref-label-input');
   const urlInp=document.getElementById('ref-url-input');
   const label=labelInp.value.trim();
   const url=urlInp.value.trim();
   if(!url)return;
-  if(!p.refs)p.refs=[];
-  p.refs.push({label,url});
+  if(!c.refs)c.refs=[];
+  c.refs.push({label,url});
   save();
   labelInp.value='';urlInp.value='';
-  document.getElementById('ref-list').innerHTML=refListHTML(p);
+  document.getElementById('ref-list').innerHTML=refListHTML(c);
 }
 function delRef(i){
-  const p=getProj(currentId);if(!p)return;
-  p.refs.splice(i,1);save();
-  document.getElementById('ref-list').innerHTML=refListHTML(p);
+  const c=getCurrentClient();if(!c)return;
+  c.refs.splice(i,1);save();
+  document.getElementById('ref-list').innerHTML=refListHTML(c);
 }
 
-/* ---- ADD STEP ---- */
+/* ---- ADD STEP (動画単位) ---- */
 function addRowHTML(sec){
   return `<div class="add-step-row" id="addrow-${sec}">
     <div class="add-step-trigger" onclick="showAddInput('${sec}')">＋ 工程を追加</div>
@@ -915,31 +1049,31 @@ function hideAddInput(sec){document.getElementById('addform-'+sec).style.display
 function submitExtra(sec){
   const inp=document.getElementById('addinput-'+sec);
   const t=inp.value.trim();if(!t)return;
-  const p=getProj(currentId);if(!p)return;
-  ensureExtras(p);ensureOrder(p);
-  const key='e'+p.extras[sec].length;
-  p.extras[sec].push({t,done:false});
-  p.order[sec].push(key);
-  save();renderDetail();
+  const v=getCurrentVideo();if(!v)return;
+  ensureExtras(v);ensureOrder(v);
+  const key='e'+v.extras[sec].length;
+  v.extras[sec].push({t,done:false});
+  v.order[sec].push(key);
+  save();renderVideoDetail();
 }
-function togExtra(sec,idx){const p=getProj(currentId);if(!p)return;ensureExtras(p);p.extras[sec][idx].done=!p.extras[sec][idx].done;save();renderDetail();}
+function togExtra(sec,idx){const v=getCurrentVideo();if(!v)return;ensureExtras(v);v.extras[sec][idx].done=!v.extras[sec][idx].done;save();renderVideoDetail();}
 function delExtra(sec,idx){
-  const p=getProj(currentId);if(!p)return;
-  ensureExtras(p);ensureOrder(p);ensureMemos(p);
+  const v=getCurrentVideo();if(!v)return;
+  ensureExtras(v);ensureOrder(v);ensureMemos(v);
   const key='e'+idx;
-  p.order[sec]=p.order[sec].filter(k=>k!==key).map(k=>{
+  v.order[sec]=v.order[sec].filter(k=>k!==key).map(k=>{
     if(typeof k==='string'&&k.startsWith('e')){const n=parseInt(k.slice(1));if(n>idx)return'e'+(n-1);}
     return k;
   });
   const sc=sec[0];
   const nm={};
-  Object.entries(p.memos).forEach(([mk,mv])=>{
+  Object.entries(v.memos).forEach(([mk,mv])=>{
     if(mk.startsWith('e'+sc)){const n=parseInt(mk.slice(2));if(n===idx)return;nm['e'+sc+(n>idx?n-1:n)]=mv;}
     else nm[mk]=mv;
   });
-  p.memos=nm;
-  p.extras[sec].splice(idx,1);
-  save();renderDetail();
+  v.memos=nm;
+  v.extras[sec].splice(idx,1);
+  save();renderVideoDetail();
 }
 function startEditExtra(sec,idx){
   document.getElementById('etw-'+sec+'-'+idx).style.display='none';
@@ -948,16 +1082,16 @@ function startEditExtra(sec,idx){
 }
 function saveExtra(sec,idx){
   const inp=document.getElementById('eei-'+sec+'-'+idx);
-  const t=inp.value.trim();const p=getProj(currentId);if(!p||!t)return;
-  ensureExtras(p);p.extras[sec][idx].t=t;save();renderDetail();
+  const t=inp.value.trim();const v=getCurrentVideo();if(!v||!t)return;
+  ensureExtras(v);v.extras[sec][idx].t=t;save();renderVideoDetail();
 }
 function moveInOrder(sec,key,dir){
-  const p=getProj(currentId);if(!p)return;
-  ensureOrder(p);
-  const arr=p.order[sec],i=arr.indexOf(key);if(i<0)return;
+  const v=getCurrentVideo();if(!v)return;
+  ensureOrder(v);
+  const arr=v.order[sec],i=arr.indexOf(key);if(i<0)return;
   const ni=i+dir;if(ni<0||ni>=arr.length)return;
   [arr[i],arr[ni]]=[arr[ni],arr[i]];
-  save();renderDetail();
+  save();renderVideoDetail();
 }
 
 /* ---- UTILS ---- */
@@ -974,8 +1108,8 @@ function toggleSeq(){
   const btn=document.querySelector('.item-detail-btn');
   if(btn)btn.textContent=seqOpen?'シーケンス構成を確認 ▴':'シーケンス構成を確認 ▾';
 }
-function togItem(idx){const p=getProj(currentId);if(!p)return;p.checks[idx]=!p.checks[idx];save();renderDetail();}
-function saveDl(v){const p=getProj(currentId);if(!p)return;p.deadline=v;save();calcDates(v);}
+function togItem(idx){const v=getCurrentVideo();if(!v)return;v.checks[idx]=!v.checks[idx];save();renderVideoDetail();}
+function saveDl(v){const vid=getCurrentVideo();if(!vid)return;vid.deadline=v;save();calcDates(v);}
 function calcDates(v){
   if(!v)return;
   const fmt=d=>{const m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return m+'/'+dd};
@@ -1001,7 +1135,7 @@ function toggleSec(id,aid){
   const el=document.getElementById('sec-'+id);const ar=document.getElementById(aid);
   const h=el.style.display==='none';el.style.display=h?'':'none';ar.textContent=h?'▲':'▼';
 }
-load();renderList();
+load();renderClientList();
 </script>
 </body>
 </html>
