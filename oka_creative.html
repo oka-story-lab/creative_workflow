@@ -191,9 +191,9 @@ body{background:#fff;min-height:100vh;font-family:'Zen Maru Gothic',sans-serif;c
 .item-left:hover{background:#FAFAFA}
 .item.done .item-left{background:#FFFDF0}
 .item-body{flex:1;min-width:0}
-.item-right{flex:1;border-left:1px dashed var(--border);display:flex;align-items:center;gap:6px;padding:8px 12px}
-.memo-label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;color:#CCC;flex-shrink:0;letter-spacing:1px}
-.item-memo-input{flex:1;border:none;padding:3px 2px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--gray);outline:none;background:transparent;min-width:0}
+.item-right{flex:1;border-left:1px dashed var(--border);display:flex;align-items:flex-start;gap:6px;padding:8px 12px}
+.memo-label{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;color:#CCC;flex-shrink:0;letter-spacing:1px;margin-top:4px}
+.item-memo-input{flex:1;border:none;padding:3px 2px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;color:var(--gray);outline:none;background:transparent;min-width:0;resize:vertical;min-height:34px;line-height:1.5;white-space:pre-wrap}
 .item-memo-input::placeholder{color:#DDD}
 .item-memo-input:focus{border-color:var(--red);color:var(--navy)}
 .cb{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
@@ -718,9 +718,9 @@ function renderVideoDetail(){
     <div class="card">
       <div class="sch-grid">
         <div class="sf"><label>納期</label><input type="date" id="dl" value="${v.deadline||''}" onchange="saveDl(this.value)"></div>
-        <div class="sf"><label>粗カット完了</label><input type="text" id="s1" readonly placeholder="—"></div>
-        <div class="sf"><label>テロップ完了</label><input type="text" id="s2" readonly placeholder="—"></div>
-        <div class="sf"><label>書き出し・チェック</label><input type="text" id="s3" readonly placeholder="—"></div>
+        <div class="sf"><label>粗カット完了</label><input type="text" id="s1" value="${esc(v.s1||'')}" placeholder="—" onchange="saveScheduleField('s1',this.value)"></div>
+        <div class="sf"><label>テロップ完了</label><input type="text" id="s2" value="${esc(v.s2||'')}" placeholder="—" onchange="saveScheduleField('s2',this.value)"></div>
+        <div class="sf"><label>書き出し・チェック</label><input type="text" id="s3" value="${esc(v.s3||'')}" placeholder="—" onchange="saveScheduleField('s3',this.value)"></div>
       </div>
     </div>
 
@@ -752,7 +752,7 @@ function renderVideoDetail(){
         oninput="saveReflection(this.value)">${esc(v.reflection||'')}</textarea>
     </div>`;
 
-  if(v.deadline)calcDates(v.deadline);
+  if(v.deadline&&v.s1===undefined)calcDates(v.deadline,false);
   if(seqOpen){const sp=document.getElementById('seq-panel');if(sp)sp.classList.add('open');}
 }
 
@@ -781,8 +781,8 @@ function itemHTML(s,idx,checked,memo){
       </div>
       <div class="item-right" onclick="event.stopPropagation()">
         <span class="memo-label">MEMO</span>
-        <input class="item-memo-input" type="text" placeholder="" value="${esc(memo)}"
-          onchange="saveMemo(${idx},this.value)" oninput="saveMemo(${idx},this.value)">
+        <textarea class="item-memo-input" placeholder="" rows="1"
+          onchange="saveMemo(${idx},this.value)" oninput="autoResizeTextarea(this);saveMemo(${idx},this.value)">${esc(memo)}</textarea>
       </div>
     </div>
     ${seqPanel}
@@ -820,8 +820,8 @@ function extraItemHTML(e,idx,sec,key,canUp,canDown,memo){
       </div>
       <div class="item-right" onclick="event.stopPropagation()">
         <span class="memo-label">MEMO</span>
-        <input class="item-memo-input" type="text" placeholder="" value="${esc(memo)}"
-          onchange="saveMemoExtra('${memoKey}',this.value)" oninput="saveMemoExtra('${memoKey}',this.value)">
+        <textarea class="item-memo-input" placeholder="" rows="1"
+          onchange="saveMemoExtra('${memoKey}',this.value)" oninput="autoResizeTextarea(this);saveMemoExtra('${memoKey}',this.value)">${esc(memo)}</textarea>
       </div>
     </div>
     <div class="seq-panel" id="detail-panel-${dtag}" onclick="event.stopPropagation()">
@@ -1155,9 +1155,11 @@ function toggleSeq(){
   if(btn)btn.textContent=seqOpen?'シーケンス構成を確認 ▴':'シーケンス構成を確認 ▾';
 }
 function togItem(idx){const v=getCurrentVideo();if(!v)return;v.checks[idx]=!v.checks[idx];save();renderVideoDetail();}
-function saveDl(v){const vid=getCurrentVideo();if(!vid)return;vid.deadline=v;save();calcDates(v);}
-function calcDates(v){
+function saveScheduleField(key,v){const vid=getCurrentVideo();if(!vid)return;vid[key]=v;save();}
+function saveDl(v){const vid=getCurrentVideo();if(!vid)return;vid.deadline=v;calcDates(v,true);save();}
+function calcDates(v,force){
   if(!v)return;
+  const vid=getCurrentVideo();if(!vid)return;
   const fmt=d=>{const m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return m+'/'+dd};
   const base=new Date(v);
   const sub=n=>{const x=new Date(base);x.setDate(x.getDate()-n);return x};
@@ -1166,16 +1168,16 @@ function calcDates(v){
   const days=Math.round((deadline-today)/(1000*60*60*24));
   // カット1日／テロップ1日／演出2日（日にちがない場合は1日）／書き出し・チェック2日
   const tight=days<6;
+  const s1v=tight?fmt(sub(4)):fmt(sub(5)); // 粗カット完了
+  const s2v=tight?fmt(sub(3)):fmt(sub(4)); // テロップ完了
+  const s3v=fmt(sub(1)); // 書き出し・チェック（納期前日）
+  if(force||vid.s1===undefined)vid.s1=s1v;
+  if(force||vid.s2===undefined)vid.s2=s2v;
+  if(force||vid.s3===undefined)vid.s3=s3v;
   const s1=document.getElementById('s1'),s2=document.getElementById('s2'),s3=document.getElementById('s3');
-  if(tight){
-    if(s1)s1.value=fmt(sub(4)); // 粗カット完了
-    if(s2)s2.value=fmt(sub(3)); // テロップ完了
-    if(s3)s3.value=fmt(sub(1)); // 書き出し・チェック（納期前日）
-  } else {
-    if(s1)s1.value=fmt(sub(5)); // 粗カット完了
-    if(s2)s2.value=fmt(sub(4)); // テロップ完了
-    if(s3)s3.value=fmt(sub(1)); // 書き出し・チェック（納期前日）
-  }
+  if(s1)s1.value=vid.s1||'';
+  if(s2)s2.value=vid.s2||'';
+  if(s3)s3.value=vid.s3||'';
 }
 function toggleSec(id,aid){
   const el=document.getElementById('sec-'+id);const ar=document.getElementById(aid);
