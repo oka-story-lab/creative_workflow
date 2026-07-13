@@ -790,6 +790,7 @@ function itemHTML(s,idx,checked,memo){
 }
 function extraItemHTML(e,idx,sec,key,canUp,canDown,memo){
   const memoKey=`e${sec[0]}${idx}`;
+  const dtag=`${sec}-${idx}`;
   const upBtn=canUp
     ?`<button class="extra-action-btn" onclick="event.stopPropagation();moveInOrder('${sec}','${key}',-1)">▲</button>`
     :`<button class="extra-action-btn" disabled>▲</button>`;
@@ -809,6 +810,7 @@ function extraItemHTML(e,idx,sec,key,canUp,canDown,memo){
               onkeydown="if(event.key==='Enter')saveExtra('${sec}',${idx})">
             <button class="extra-save-btn" onclick="event.stopPropagation();saveExtra('${sec}',${idx})">保存</button>
           </div>
+          <div class="item-detail-btn" onclick="event.stopPropagation();toggleExtraDetail('${sec}',${idx})" id="detail-toggle-${dtag}">${e.detail?'📄 詳細を見る':'＋ 詳細を追加'} <span id="detail-arr-${dtag}">▾</span></div>
         </div>
         <div class="extra-actions" onclick="event.stopPropagation()">
           ${upBtn}${downBtn}
@@ -820,6 +822,14 @@ function extraItemHTML(e,idx,sec,key,canUp,canDown,memo){
         <span class="memo-label">MEMO</span>
         <input class="item-memo-input" type="text" placeholder="" value="${esc(memo)}"
           onchange="saveMemoExtra('${memoKey}',this.value)" oninput="saveMemoExtra('${memoKey}',this.value)">
+      </div>
+    </div>
+    <div class="seq-panel" id="detail-panel-${dtag}" onclick="event.stopPropagation()">
+      <div class="overview-preview" id="detail-preview-${dtag}" onclick="startEditExtraDetail('${sec}',${idx})">${e.detail?marked.parse(e.detail):'<span style="color:#CCC">クリックして編集...</span>'}</div>
+      <textarea class="overview-textarea" id="detail-ta-${dtag}" placeholder="マークダウンで入力できます（プロンプト全文などを貼ってOK）" oninput="autoResizeTextarea(this)">${esc(e.detail||'')}</textarea>
+      <div>
+        <button class="overview-save-btn" id="detail-save-${dtag}" onclick="saveExtraDetail('${sec}',${idx})">保存</button>
+        <button class="overview-cancel-btn" id="detail-cancel-${dtag}" onclick="cancelEditExtraDetail('${sec}',${idx})">キャンセル</button>
       </div>
     </div>
   </div>`;
@@ -1052,7 +1062,7 @@ function submitExtra(sec){
   const v=getCurrentVideo();if(!v)return;
   ensureExtras(v);ensureOrder(v);
   const key='e'+v.extras[sec].length;
-  v.extras[sec].push({t,done:false});
+  v.extras[sec].push({t,done:false,detail:''});
   v.order[sec].push(key);
   save();renderVideoDetail();
 }
@@ -1092,6 +1102,42 @@ function moveInOrder(sec,key,dir){
   const ni=i+dir;if(ni<0||ni>=arr.length)return;
   [arr[i],arr[ni]]=[arr[ni],arr[i]];
   save();renderVideoDetail();
+}
+
+/* ---- EXTRA ITEM DETAIL (工程の詳細・プロンプトなど) ---- */
+function toggleExtraDetail(sec,idx){
+  const dtag=`${sec}-${idx}`;
+  const panel=document.getElementById('detail-panel-'+dtag);
+  const arr=document.getElementById('detail-arr-'+dtag);
+  const open=!panel.classList.contains('open');
+  panel.classList.toggle('open',open);
+  if(arr)arr.textContent=open?'▴':'▾';
+}
+function startEditExtraDetail(sec,idx){
+  const dtag=`${sec}-${idx}`;
+  document.getElementById('detail-preview-'+dtag).style.display='none';
+  const ta=document.getElementById('detail-ta-'+dtag);
+  ta.style.display='block';
+  document.getElementById('detail-save-'+dtag).style.display='inline-block';
+  document.getElementById('detail-cancel-'+dtag).style.display='inline-block';
+  ta.focus();autoResizeTextarea(ta);
+}
+function cancelEditExtraDetail(sec,idx){
+  const v=getCurrentVideo();if(!v)return;
+  const dtag=`${sec}-${idx}`;
+  const e=v.extras[sec][idx];if(!e)return;
+  document.getElementById('detail-ta-'+dtag).value=e.detail||'';
+  document.getElementById('detail-ta-'+dtag).style.display='none';
+  document.getElementById('detail-save-'+dtag).style.display='none';
+  document.getElementById('detail-cancel-'+dtag).style.display='none';
+  document.getElementById('detail-preview-'+dtag).style.display='';
+}
+function saveExtraDetail(sec,idx){
+  const v=getCurrentVideo();if(!v)return;
+  const dtag=`${sec}-${idx}`;
+  const e=v.extras[sec][idx];if(!e)return;
+  e.detail=document.getElementById('detail-ta-'+dtag).value;
+  save();renderVideoDetail();showToast('詳細を保存しました');
 }
 
 /* ---- UTILS ---- */
